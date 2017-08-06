@@ -1,0 +1,5 @@
+run
+build
+clean
+compile
+sbt clean compile
