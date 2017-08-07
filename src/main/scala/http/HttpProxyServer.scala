@@ -5,7 +5,7 @@ import java.net.{ServerSocket, Socket, UnknownHostException}
 
 import exception.NotHeaderException
 import mock.client.HttpClientMock
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -17,50 +17,43 @@ import scala.concurrent.Future
   */
 class HttpProxyServer {
 
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger : Logger = LoggerFactory.getLogger(getClass)
   val port689 = 689
-  val NOT_FOUND = -1
+  val NOT_FOUND : Int = -1
 
   private var targetHost : String = _
 
   private var reader : BufferedReader = _
   private var writer : PrintWriter = _
   private var client : Socket = _
+  private var socketServer : ServerSocket = _
 
   def accept() : Unit = {
 
     logger.info("http server is waiting at {} ",port689)
 
-    val socketServer = new ServerSocket(port689)
+    socketServer = new ServerSocket(port689)
     client = socketServer.accept()
+    socketServer.close()
 
     logger.info("{} has connected",client.getInetAddress)
 
-    val thread = beginProcessThread(client)
-    thread.join()
+    beginProcessThread(client)
 //    writer.close()
 //    client.close()
 
-    Thread.sleep(5000)
     logger.info("http server has process a task {}",client.toString)
 
   }
 
-  private def beginProcessThread(client:Socket):Thread = {
-    if(client == null)
-    {
-      logger.info("no client has connected ")
-      throw new IllegalArgumentException(s"client should not be null")
-    }
+  private def beginProcessThread(client:Socket):Unit = {
     reader = new BufferedReader(new InputStreamReader(client.getInputStream))
     writer = new PrintWriter(client.getOutputStream)
 
     val task = new Runnable {
       override def run() : Unit = processClientRequest()
     }
-    val processThread= new Thread(task)
-    processThread.start()
-    processThread
+    new Thread(task).start()
   }
 
   private def processClientRequest() : Unit = {
@@ -81,14 +74,14 @@ class HttpProxyServer {
     val nameValues = ArrayBuffer[(String,String)]()
     while(line != ""){
       logger.info(line)
-      nameValues += parseHeader(line)
+      nameValues += parseHeaderInLine(line)
       line = reader.readLine()
     }
     logger.info("headers parse finish")
     nameValues.toArray
   }
 
-  private def parseHeader(line : String): (String,String) ={
+  private def parseHeaderInLine(line : String): (String,String) ={
     val index = line.indexOf(":")
     if(index == NOT_FOUND){
       throw new NotHeaderException(line)

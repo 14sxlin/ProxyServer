@@ -14,23 +14,17 @@ object HttpProxyServerRun extends App{
 
   val executePool = new ForkJoinPool(4)
 
+  val server = new HttpProxyServer
   val task = new Runnable {
     override def run() : Unit = {
       while(true){
         logger.info("new server waiting ..")
-        val server = new HttpProxyServer
         server.accept()
       }
     }
   }
-  logger.info("start running ..")
 
-  executePool.execute(task)
-//
-  executePool.awaitTermination(10,TimeUnit.MINUTES)
+  val t = new Thread(task)
+  t.start()
 
-//  val server = new HttpProxyServer
-//  server.accept()
-
-  logger.info("time out .. quit")
 }
