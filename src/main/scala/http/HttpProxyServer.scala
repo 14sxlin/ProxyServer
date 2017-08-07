@@ -4,7 +4,6 @@ import java.io._
 import java.net.{ServerSocket, Socket, UnknownHostException}
 
 import exception.NotHeaderException
-import mock.client.HttpClientMock
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ArrayBuffer
@@ -21,7 +20,7 @@ class HttpProxyServer {
   val port689 = 689
   val NOT_FOUND : Int = -1
 
-  private var targetHost : String = _
+//  private var targetHost : String = _
 
   private var reader : BufferedReader = _
   private var writer : PrintWriter = _
@@ -103,16 +102,15 @@ class HttpProxyServer {
   private def doGetAndResponseClient(host:String,uri:String)  = {
     val requestFuture = Future{
       logger.info(s"request : doGet: $uri")
-      new HttpClientMock().doGet(uri)
+      HttpUtils.doGet(uri)
     }
 
     requestFuture.failed.foreach((exception) =>{
       logger.error("some error occur",exception)
     })
     requestFuture.foreach{
-      case content:String =>
-        logger.info("get content-length : {}",content.length)
-        sendResponseToClient(content)
+      case (statusLine,headers,responseBody) =>
+        sendResponseToClient(statusLine,headers,responseBody)
       case _ =>
         throw new IOException(s"cannot get uri: host :  $host" +
           s"\r\n uri : $uri")
@@ -131,14 +129,30 @@ class HttpProxyServer {
     }
   }
 
-  private def sendResponseToClient(response:String) = {
-    writer.append("HTTP/1.1 200 OK\r\n")
-    writer.append("Content-Type: text/html; charset=UTF-8\r\n")
-    writer.append("Server: sparrowxin-Proxy\r\n")
-    writer.append(s"Content-Length: ${response.length}\r\n\r\n")
-    writer.append(response)
-    writer.flush()
+  private def sendResponseToClient(responseLine:String,
+                                   headers:Array[(String,String)],
+                                   body:String) = {
+    fillResponseLine(responseLine)
+    fillHeaders(headers)
+    fillResponse(body)
+    closeResource()
     logger.info("content has been send to client")
+  }
+
+  private def fillResponseLine(responseLine:String) =
+    writer.append(responseLine)
+
+  private def fillHeaders(headers:Array[(String,String)]) = {
+    for( (name,value) <- headers)
+      writer.append(s"$name: $value \r\n")
+    writer.append("\r\n")
+  }
+
+  private def fillResponse(body:String) =
+    writer.append(body)
+
+  private def closeResource(): Unit ={
+    writer.flush()
     writer.close()
     reader.close()
     client.close()
