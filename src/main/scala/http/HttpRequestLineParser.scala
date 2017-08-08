@@ -6,7 +6,7 @@ package http
 object HttpRequestLineParser {
 
   /**
-    * parse http request line
+    * parse http request first line
     * @param requestLine http request line
     * @return (request-method,request-uri,http-version)
     */
