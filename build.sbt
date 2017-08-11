@@ -19,3 +19,6 @@ libraryDependencies += "org.scalatest" % "scalatest_2.11" % "3.0.1" % "test"
 
 // https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient
 libraryDependencies += "org.apache.httpcomponents" % "httpclient" % "4.5.3"
+
+// https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.6"
