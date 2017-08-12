@@ -9,7 +9,7 @@ import org.scalatest.FunSuite
   */
 class TestHttpProxyServer extends FunSuite{
 
-  val server = new HttpProxyServer
+//  val server = new HttpProxyServer
 //
 //  test("test parse header"){
 //    val validHeader = "Host: mmstat.ucweb.com:443"
