@@ -1,28 +1,38 @@
 package task
 
-import java.io.PrintWriter
+import entity.{Request, Response}
+import utils.http.HttpUtils
 
-import entity.Response
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
   * Created by sparr on 2017/8/12.
   */
-class GetTask(override val method:String,
-              override val uri:String,
-              override val httpVersion:String)
-                  extends Task(method,uri,httpVersion){
+class GetTask(request: Request)
+                  extends Task(request){
 
-  override val onSuccess: (PrintWriter, Response) => {} =
-    (writer,response) =>{
-???
-    }
-
-  override val onFail: (PrintWriter, Response) => {} =
-    (writer,response) =>{
+  override var onSuccess: (Response) => {} =
+    (response) =>{
       ???
     }
 
   override def begin(): Unit = {
-    ???
+    val doGetResult = Future[Response]{
+      HttpUtils.doGet(request)
+    }
+
+    doGetResult.foreach{
+      case response : Response =>
+        onSuccess(response)
+      case _ =>
+        throw new Exception("unknown response")
+    }
+    doGetResult.failed match {
+      case e : Exception =>
+        onFail(e)
+    }
+
+
   }
 }

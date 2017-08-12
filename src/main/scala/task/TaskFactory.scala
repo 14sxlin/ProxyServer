@@ -1,22 +1,19 @@
 package task
 
+import constants.HttpRequestMethod
+import entity.Request
 import org.apache.commons.lang3.StringUtils
 
 /**
   * Created by sparr on 2017/8/11.
   */
 object TaskFactory {
-  def createTask(methodUriVersion:(String,String,String),
-                 headers:String,
-                 body:String) : Task = {
-    val method = methodUriVersion._1
-    val uri = methodUriVersion._2
-    val version = methodUriVersion._3
-    StringUtils.upperCase(method) match {
-      case "GET" =>
-        new GetTask(method,uri,version)
-      case "POST" =>
-        new PostTask(method,uri,version)
+  def createTask(request:Request) : Task = {
+    request.method match {
+      case HttpRequestMethod.GET =>
+        new GetTask(request)
+      case HttpRequestMethod.GET =>
+        new PostTask(request)
     }
   }
 
