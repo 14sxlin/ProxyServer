@@ -1,4 +1,4 @@
-package http
+package constants
 
 /**
   * Created by sparr on 2017/8/6.
@@ -20,4 +20,5 @@ object HttpRequestMethod {
   val PUT = "PUT"
   val DELETE = "DELETE"
   val TRACE = "TRACE"
+  val list = Array(CONNECT,GET,POST,HEAD,PUT,DELETE,TRACE)
 }
