@@ -1,7 +1,8 @@
-package http
+package utils.http
 
+import entity.{Request, Response}
 import org.apache.http.client.entity.UrlEncodedFormEntity
-import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet, HttpPost}
+import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.impl.client.HttpClients
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.util.EntityUtils
@@ -9,21 +10,17 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConversions._
 /**
-  * Created by sparr on 2017/8/7.
+  * Created by linsixin on 2017/8/7.
   */
 object HttpUtils {
 
   val logger : Logger = LoggerFactory.getLogger(getClass)
 
-  /**
-    * do get method
-    * @param url url
-    * @return (responseLine,headers,content)
-    */
-  def doGet(url:String) : (String,Array[(String,String)],String) =  {
+
+  def doGet(request:Request) : Response =  {
     val httpClient = HttpClients.createDefault()
-    val getMethod = new HttpGet(url)
-    val response = httpClient.execute(getMethod)
+    val httpGet = new HttpGet(request.uri)
+    val response = httpClient.execute(httpGet)
 
     val responseLine = response.getStatusLine.toString
     val headers = response.getAllHeaders.map(header =>{
@@ -36,7 +33,7 @@ object HttpUtils {
 
     logResponse(responseLine,headers, content.length)
 
-    (responseLine,headers,content)
+    Response(responseLine,headers,content)
   }
 
   /**
@@ -45,8 +42,7 @@ object HttpUtils {
     * @param params params want to post , Array of (name,value) tuple
     * @return (responseLine,headers,content)
     */
-  def doPost(url:String,params:Array[(String,String)]):
-                            (String,Array[(String,String)],String)  = {
+  def doPost(url:String,params:Array[(String,String)]):Response = {
 
     val client = HttpClients.createDefault()
     val postRequest = new HttpPost(url)
@@ -72,7 +68,7 @@ object HttpUtils {
 
     logResponse(responseLine,headers, content.length)
 
-    (responseLine,headers,content)
+    Response(responseLine,headers,content)
   }
 
   private def logResponse(responseLine:String,
