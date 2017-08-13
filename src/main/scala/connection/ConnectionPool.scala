@@ -2,15 +2,15 @@ package connection
 
 import java.net.Socket
 
-import scala.collection.mutable.ArrayBuffer
-
 /**
   * Created by linsixin on 2017/8/11.
   */
 abstract class ConnectionPool {
 
-  protected val socketConnections : ArrayBuffer[SocketConnection] =
-    ArrayBuffer[SocketConnection]()
+  protected val socketConnections :
+    scala.collection.mutable.Map[Socket,SocketConnection]
 
-  def add(socket:Socket)
+  def put(socket:Socket)
+
+  def get(socket: Socket):SocketConnection
 }

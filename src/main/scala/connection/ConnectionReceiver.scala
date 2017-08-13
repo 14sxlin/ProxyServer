@@ -18,7 +18,7 @@ object ConnectionReceiver {
     logger.info(s"start listening at $port689")
     val serverSocket = new ServerSocket(port689)
     val clientSocket = serverSocket.accept()
-    connectionPool.add(clientSocket)
+    connectionPool.put(clientSocket)
     logger.info(s"connect : ${clientSocket.getInetAddress}")
     serverSocket.close()
   }
