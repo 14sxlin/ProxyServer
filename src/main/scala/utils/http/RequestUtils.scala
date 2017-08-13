@@ -1,5 +1,8 @@
 package utils.http
 
+import java.io.{BufferedReader, InputStreamReader, PrintWriter}
+import java.net.{HttpURLConnection, URL}
+
 import entity.{Request, Response}
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
@@ -16,8 +19,12 @@ object RequestUtils {
 
   val logger : Logger = LoggerFactory.getLogger(getClass)
 
-
-  def doGet(request:Request) : Response =  {
+  /**
+    * send get request by HttpClient
+    * @param request
+    * @return
+    */
+  def doGetByHttpClient(request:Request) : Response =  {
     val httpClient = HttpClients.createDefault()
     val httpGet = new HttpGet(request.uri)
     val response = httpClient.execute(httpGet)
@@ -37,8 +44,14 @@ object RequestUtils {
   }
 
 
-  def doPost(request: Request,
-             params:Array[(String,String)]):Response = {
+  /**
+    * send post request by HttpClient
+    * @param request
+    * @param params
+    * @return
+    */
+  def doPostByHttpClient(request: Request,
+                         params:Array[(String,String)]):Response = {
 
     val client = HttpClients.createDefault()
     val postRequest = new HttpPost(request.uri)
@@ -74,4 +87,29 @@ object RequestUtils {
     logger.info("headers : {}", headers)
     logger.info("body content length : {}",contentLength)
   }
+
+  /**
+    * directly send data from client to server using http connection
+    */
+  def sendDataBySocket(url:String,data:String) = {
+    val con = new URL(url).openConnection().asInstanceOf[HttpURLConnection]
+    con.setDoOutput(true)
+    con.connect()
+    val writer = new PrintWriter(con.getOutputStream)
+    writer.append(data)
+    writer.flush()
+
+    val reader = new BufferedReader(new InputStreamReader(con.getInputStream))
+    var line = reader.readLine()
+    while(line != null){
+      logger.debug(s"response : $line")
+      line = reader.readLine()
+    }
+
+    writer.close()
+    con.disconnect()
+
+    Response("",null,"")
+  }
+
 }

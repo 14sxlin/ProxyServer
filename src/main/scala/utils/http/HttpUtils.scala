@@ -28,7 +28,20 @@ object HttpUtils {
     */
   def postBody2Param(body:String) : Array[(String,String)] = {
     logger.debug(s"postBody : $body")
-    ???
+    val params = body.split("&")
+    params.map(splitEq)
+  }
+
+  /**
+    *
+    * @param nameEqValue name=value
+    * @return (name,value)
+    */
+  private def splitEq(nameEqValue:String): (String,String) ={
+    if(nameEqValue==null || !nameEqValue.contains("="))
+      throw new IllegalArgumentException(s"$nameEqValue is not a=b form")
+    val index = nameEqValue.indexOf("=")
+    (nameEqValue.substring(0,index),nameEqValue.substring(index+1))
   }
 
 }

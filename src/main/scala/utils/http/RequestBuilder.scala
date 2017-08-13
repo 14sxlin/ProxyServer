@@ -1,14 +1,11 @@
 package utils.http
 
-import java.io.BufferedReader
-
 import constants.HttpRequestMethod
 import entity.Request
 import exception.NotHeaderException
 import handler.header.HeaderHandler
+import org.apache.commons.lang3.StringUtils
 import org.slf4j.{Logger, LoggerFactory}
-
-import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by linsixin on 2017/8/12.
@@ -20,35 +17,45 @@ object RequestBuilder {
 
   private val NOT_FOUND = -1
 
-  def buildRequest(reader:BufferedReader,
+  def buildRequest(requestRawData:String,
                    requestHeaderHandler:HeaderHandler) : Request = {
-    val firstLine = reader.readLine()
-    if(isNotCorrectBegin(firstLine)){
+    val parts = requestRawData.split("\r\n")
+    val firstLine = parts(0)
+
+    if(isNotCorrectHttpLine(firstLine)){
       logger.warn(s"$firstLine is not correct begin")
-//      throw new IncorrectRequest(firstLine)
+      return Request.EMPTY
     }
-    val requestHeaders = requestHeaderHandler.handle(parseHeaders(reader))
-    val requestBody = parseBody(reader)
-    Request(firstLine,requestHeaders,requestBody)
+    logger.info(firstLine)
+
+    if(hasBodyPart(parts)){
+      logger.info("<has body/>")
+      buildRequestWithBody(firstLine,parts)
+    }else{
+      logger.info("<no body/>")
+      buildRequestNoBody(firstLine,parts)
+    }
   }
 
-  def isNotCorrectBegin(firstLine:String): Boolean = {
+  def isNotCorrectHttpLine(firstLine:String): Boolean = {
+    if(firstLine == null){
+      logger.info("first line is null")
+      return true
+    }
     val parts = firstLine.split(" ")
-    parts.length != 2 ||
+    parts.length != 3 ||
       !HttpRequestMethod.list.contains(parts(0).trim)
   }
 
-  private def parseHeaders(reader: BufferedReader) : Array[(String,String)] = {
-    logger.info("<headers>")
-    var line = reader.readLine()
-    val nameValues = ArrayBuffer[(String,String)]()
-    while(line != ""){
-      logger.info(line)
-      nameValues += parseHeaderInLine(line)
-      line = reader.readLine()
-    }
-    logger.info("</headers>")
-    nameValues.toArray
+  private def buildRequestWithBody(firstLine:String,parts:Array[String]) = {
+    val headers = parts.slice(1,parts.length-2).map(parseHeaderInLine)
+    val body = parts.last
+    Request(firstLine,headers,body)
+  }
+
+  private def buildRequestNoBody(firstLine:String,parts:Array[String]) = {
+    val headers = parts.slice(1,parts.length).map(parseHeaderInLine)
+    Request(firstLine,headers,StringUtils.EMPTY)
   }
 
   private def parseHeaderInLine(line : String): (String,String) ={
@@ -61,14 +68,9 @@ object RequestBuilder {
     (name,value)
   }
 
-  private def parseBody(reader: BufferedReader) : String = {
-    val body = new StringBuffer()
-    var line = reader.readLine()
-    while(line != ""){
-      body.append(line)
-      line = reader.readLine()
-    }
-    body.toString
+  private def hasBodyPart(requestParts:Array[String]) = {
+    requestParts.indexOf("") != requestParts.length-1
   }
+
 
 }
