@@ -1,7 +1,7 @@
 package task
 
 import entity.{Request, Response}
-import utils.http.HttpUtils
+import utils.http.RequestUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -12,14 +12,11 @@ import scala.concurrent.Future
 class GetTask(request: Request)
                   extends Task(request){
 
-  override var onSuccess: (Response) => {} =
-    (response) =>{
-      ???
-    }
-
   override def begin(): Unit = {
+    if(request == Request.EMPTY)
+      return
     val doGetResult = Future[Response]{
-      HttpUtils.doGet(request)
+      RequestUtils.doGetByHttpClient(request)
     }
 
     doGetResult.foreach{
@@ -31,8 +28,9 @@ class GetTask(request: Request)
     doGetResult.failed match {
       case e : Exception =>
         onFail(e)
+      case any : AnyRef =>
+        logger.error("get strange thing :" + any.toString)
     }
-
-
   }
+
 }
