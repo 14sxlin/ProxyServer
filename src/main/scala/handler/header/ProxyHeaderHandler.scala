@@ -23,6 +23,7 @@ class ProxyHeaderHandler extends HeaderHandler{
       val name = nameValue._1
       name.contains("Proxy") ||
         name.contains("Connection") ||
+        name.contains("Keep-Alive") ||
           dropHeader.contains(name)
     })
     nextHandler match {
