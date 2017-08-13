@@ -1,5 +1,7 @@
 package entity
 
+import utils.http.HttpUtils
+
 /**
   * Created by linsixin on 2017/8/12.
   */
@@ -15,13 +17,9 @@ case class Request(firstLine:String,
   def mkString: String = {
     val str = new StringBuilder
     str.append(s"$firstLine\r\n")
-      .append(headers.map(header2String).mkString("\r\n"))
+      .append(headers.map(HttpUtils.header2String).mkString("\r\n"))
       .append("\r\n"*2)
       .append(s"$body").toString()
-  }
-
-  private def header2String(nameValue:(String,String)) = {
-    s"${nameValue._1}: ${nameValue._2}"
   }
 
   /**
