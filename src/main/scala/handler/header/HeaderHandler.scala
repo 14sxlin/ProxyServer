@@ -10,5 +10,5 @@ abstract class HeaderHandler {
   @BeanProperty
   var nextHandler: HeaderHandler = _
 
-  def handler(headers: Array[(String, String)]):Array[(String,String)]
+  def handle(headers: Array[(String, String)]):Array[(String,String)]
 }

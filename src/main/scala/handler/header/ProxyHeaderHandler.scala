@@ -8,7 +8,7 @@ package handler.header
   */
 class ProxyHeaderHandler extends HeaderHandler{
 
-  override def handler(headers: Array[(String, String)]):
+  override def handle(headers: Array[(String, String)]):
                                     Array[(String,String)] = {
     val dropHeader = headers.find( nameValue =>{
       val header = nameValue._1
@@ -29,7 +29,7 @@ class ProxyHeaderHandler extends HeaderHandler{
       case null =>
         newHeaders
       case _  =>
-        nextHandler.handler(newHeaders)
+        nextHandler.handle(newHeaders)
 
     }
 

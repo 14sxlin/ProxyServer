@@ -16,8 +16,8 @@ class TestProxyHeaderHandler extends FunSuite{
 
   val handler = new ProxyHeaderHandler
 
-  test("test handler filter one header"){
-    val result = handler.handler(headers1)
+  test("test handle filter one header"){
+    val result = handler.handle(headers1)
 
     assert(result.length == 1 &&
       result(0)._1 == "Keep-Alive" &&
@@ -33,8 +33,8 @@ class TestProxyHeaderHandler extends FunSuite{
     ("Keep-Alive","lalal"),
     ("Content","")
   )
-  test("test handler filter more header"){
-    val result = handler.handler(headers2)
+  test("test handle filter more header"){
+    val result = handler.handle(headers2)
 
     assert(result.length == 1 &&
       result(0)._1 == "Keep-Alive" &&

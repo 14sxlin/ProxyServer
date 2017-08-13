@@ -27,7 +27,7 @@ object RequestBuilder {
       logger.warn(s"$firstLine is not correct begin")
 //      throw new IncorrectRequest(firstLine)
     }
-    val requestHeaders = requestHeaderHandler.handler(parseHeaders(reader))
+    val requestHeaders = requestHeaderHandler.handle(parseHeaders(reader))
     val requestBody = parseBody(reader)
     Request(firstLine,requestHeaders,requestBody)
   }
@@ -70,4 +70,5 @@ object RequestBuilder {
     }
     body.toString
   }
+
 }
