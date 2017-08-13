@@ -3,27 +3,21 @@ package connection
 import java.io.{BufferedReader, InputStreamReader, PrintWriter}
 import java.net.Socket
 
-import constants.HttpRequestMethod
-import entity.Request
-import exception.NotHeaderException
-import handler.header.{DefaultHeaderChain, HeaderHandler}
+import entity.Response
+import handler.header.DefaultHeaderChain
 import org.slf4j.LoggerFactory
-import task.{GetTask, PostTask, TaskFactory}
+import task.TaskFactory
 import utils.http.RequestBuilder
-
-import scala.collection.mutable.ArrayBuffer
 
 
 /**
-  * Created by sparr on 2017/8/11.
+  * Created by linsixin on 2017/8/11.
   * This class holds the socket connection<br/>
   *
   */
-class SocketConnection(socket:Socket) {
+class SocketConnection(val socket:Socket) {
 
   private val logger = LoggerFactory.getLogger(getClass)
-
-  private val NOT_FOUND = -1
 
   private var readThread: Thread = _
   private var reader : BufferedReader = _
@@ -38,6 +32,7 @@ class SocketConnection(socket:Socket) {
     reader = new BufferedReader(
       new InputStreamReader(socket.getInputStream))
     writer = new PrintWriter(socket.getOutputStream)
+    logger.debug("setup stream success")
   }
 
   private def startListenThread() : Unit = {
@@ -51,10 +46,22 @@ class SocketConnection(socket:Socket) {
   }
 
   private def listenAndBuildRequestTask() = {
-
     val request = RequestBuilder.buildRequest(reader,
       DefaultHeaderChain.firstOfRequestHeaderHandlerChain)
-    TaskFactory.createTask(request)
+    val task = TaskFactory.createTask(request)
+    task.onSuccess = response2Client
+    task.begin()
+  }
+
+  private def response2Client(response: Response) = {
+    val handler = DefaultHeaderChain.firstOfResponseHeaderHandlerChain
+    val newHeader = handler.handle(response.headers)
+    response.headers = newHeader
+    writer.append(response.mkString)
+    writer.flush()
+    writer.close()
+    reader.close()
+    socket.close()
   }
 
 
