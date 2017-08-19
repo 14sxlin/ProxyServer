@@ -1,16 +1,14 @@
 package connection
 
-import java.net.Socket
-
 /**
   * Created by linsixin on 2017/8/11.
   */
-abstract class ConnectionPool {
+trait ConnectionPool {
 
   protected val socketConnections :
-    scala.collection.mutable.Map[Socket,SocketConnection]
+    scala.collection.mutable.Map[String, ClientConnection]
 
-  def put(socket:Socket)
+  def put(id: String, socket: ClientConnection)
 
-  def get(socket: Socket):SocketConnection
+  def get(id: String): ClientConnection
 }

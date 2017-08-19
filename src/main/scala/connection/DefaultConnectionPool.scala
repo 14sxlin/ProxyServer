@@ -1,9 +1,5 @@
 package connection
 
-import java.net.Socket
-
-import handler.header.DefaultHeaderChain
-
 import scala.collection.mutable
 
 /**
@@ -11,16 +7,14 @@ import scala.collection.mutable
   */
 class DefaultConnectionPool extends ConnectionPool{
 
-  override protected val socketConnections: mutable.Map[Socket, SocketConnection]
-        = mutable.Map[Socket,SocketConnection]()
+  override val socketConnections: mutable.Map[String, ClientConnection]
+  = mutable.Map[String, ClientConnection]()
 
-  override def put(socket:Socket) : Unit = {
-    val socketCon = new SocketConnection(socket)
-    socketConnections += socket -> socketCon
-    socketCon.startListen()
+  override def put(id: String, socketCon: ClientConnection): Unit = {
+    socketConnections += (id -> socketCon)
   }
 
-  override def get(socket: Socket): SocketConnection = {
-    socketConnections(socket)
+  override def get(id: String): ClientConnection = {
+    socketConnections(id)
   }
 }
