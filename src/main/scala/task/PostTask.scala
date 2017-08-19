@@ -1,7 +1,8 @@
 package task
 
-import entity.{Request, Response}
-import utils.http.{HttpUtils, RequestUtils}
+import entity.Response
+import org.apache.http.client.methods.HttpUriRequest
+import utils.http.HttpUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -9,14 +10,14 @@ import scala.concurrent.Future
   * Created by linsixin on 2017/8/12.
   *
   */
-class PostTask(request: Request)
+class PostTask(request: HttpUriRequest)
                             extends Task(request) {
   override def begin(): Unit = {
-    if(request == Request.EMPTY)
+    if (request == null)
       return
     val postResult = Future[Response]{
-      RequestUtils.doPostByHttpClient(request,
-        HttpUtils.postBody2Param(request.body))
+      logger.info("request has been send")
+      HttpUtils.execute(request)
     }
 
     postResult onSuccess {

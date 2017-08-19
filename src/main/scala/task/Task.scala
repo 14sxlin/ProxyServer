@@ -1,12 +1,13 @@
 package task
 
-import entity.{Request, Response}
+import entity.Response
+import org.apache.http.client.methods.HttpUriRequest
 import org.slf4j.{Logger, LoggerFactory}
 
 /**
   * Created by sparr on 2017/8/11.
   */
-abstract class Task(request:Request) {
+abstract class Task(request: HttpUriRequest) {
   protected val logger: Logger = LoggerFactory.getLogger(getClass)
 
   var onSuccess: (Response) => Unit =
