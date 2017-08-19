@@ -1,23 +1,27 @@
 package http
 
-import handler.header.ProxyHeaderHandler
+import entity.request.Request
+import filter.header.ProxyHeaderFilter
 import org.scalatest.FunSuite
 
 /**
   * Created by sparr on 2017/8/11.
   */
 class TestProxyHeaderHandler extends FunSuite{
+
+  val filter = new ProxyHeaderFilter
+
+
   val headers1 = Array(
     ("Connection","Host"),
     ("Proxy-Auth","####"),
     ("Host","hasdlf"),
     ("Keep-Alive","lalal")
   )
-
-  val handler = new ProxyHeaderHandler
+  val request1 = Request("", headers1, "")
 
   test("test handle filter one header"){
-    val result = handler.handle(headers1)
+    val result = filter.handle(request1).headers
 
     assert(result.length == 1 &&
       result(0)._1 == "Keep-Alive" &&
@@ -33,8 +37,9 @@ class TestProxyHeaderHandler extends FunSuite{
     ("Keep-Alive","lalal"),
     ("Content","")
   )
+  val request2 = Request("", headers2, "")
   test("test handle filter more header"){
-    val result = handler.handle(headers2)
+    val result = filter.handle(request2).headers
 
     assert(result.length == 1 &&
       result(0)._1 == "Keep-Alive" &&

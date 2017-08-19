@@ -1,5 +1,6 @@
 package entity
 
+import entity.request.Request
 import org.scalatest.FunSuite
 
 /**
@@ -15,6 +16,6 @@ class TestRequest extends FunSuite{
   val expLength = 5
 
   test("test request to string"){
-    assert(req1.mkString.split("\r\n").length == expLength)
+    assert(req1.mkHttpString.split("\r\n").length == expLength)
   }
 }
