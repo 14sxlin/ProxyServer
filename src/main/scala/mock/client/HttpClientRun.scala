@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory
 object HttpClientRun extends App{
   val logger = LoggerFactory.getLogger(getClass)
 
-
+  val getPort = 9000
   val proxyPort = 689
   val proxy = "localhost"
   val targetURI = "/"
@@ -35,7 +35,7 @@ object HttpClientRun extends App{
       override def run() : Unit = {
         while(true){
           try{
-            val result = httpClient.doGetByProxyWithHttp(targetHost,targetPort,proxy,proxyPort,targetURI)
+            val result = httpClient.doGetByProxyWithHttp(targetHost, getPort, proxy, proxyPort, targetURI)
             logger.info(s"receive data = : $result")
             Thread.sleep(5000)
           }catch {
@@ -74,7 +74,7 @@ object HttpClientRun extends App{
     new Thread(task)
   }
 
-  val thread = doPostByProxy()
+  val thread = doGetByProxy()
   thread.start()
   thread.join()
 
