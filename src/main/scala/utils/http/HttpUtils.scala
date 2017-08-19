@@ -1,47 +1,39 @@
 package utils.http
 
+import entity.Response
+import org.apache.http.client.methods.HttpUriRequest
+import org.apache.http.impl.client.HttpClients
+import org.apache.http.util.EntityUtils
 import org.slf4j.{Logger, LoggerFactory}
-
 /**
-  * Created by linsixin on 2017/8/12.
+  * Created by linsixin on 2017/8/7.
   */
 object HttpUtils {
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  /**
-    * transform nameValue pair to http request header string
-    * @param nameValue a name value tuple
-    * @return
-    */
-  def header2String(nameValue:(String,String)) : String = {
-    val r = s"${nameValue._1}: ${nameValue._2}"
-    logger.debug(s"$nameValue  to : $r")
-    r
+  def execute(request: HttpUriRequest): Response = {
+    val client = HttpClients.createDefault()
+    val httpResponse = client.execute(request)
+
+    val response = Response(
+      httpResponse.getStatusLine.toString,
+      httpResponse.getAllHeaders.map(h => (h.getName, h.getValue)),
+      EntityUtils.toString(httpResponse.getEntity))
+
+    httpResponse.close()
+    client.close()
+    logResponse(response)
+
+    response
+
   }
 
-  /**
-    * transform post data in raw to (name,value) array<br/>
-    * to post request by HttpClient
-    * @param body http request body part
-    * @return
-    */
-  def postBody2Param(body:String) : Array[(String,String)] = {
-    logger.debug(s"postBody : $body")
-    val params = body.split("&")
-    params.map(splitEq)
+  private def logResponse(response: Response) = {
+    logger.info("status line : {}", response.firstLine)
+    response.headers.foreach(h => println(s"${h._1} : ${h._2}"))
+    logger.info("body content length : {}", response.body.length)
   }
 
-  /**
-    *
-    * @param nameEqValue name=value
-    * @return (name,value)
-    */
-  private def splitEq(nameEqValue:String): (String,String) ={
-    if(nameEqValue==null || !nameEqValue.contains("="))
-      throw new IllegalArgumentException(s"$nameEqValue is not a=b form")
-    val index = nameEqValue.indexOf("=")
-    (nameEqValue.substring(0,index),nameEqValue.substring(index+1))
-  }
 
 }
