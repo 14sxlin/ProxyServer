@@ -5,8 +5,8 @@ package exception
   */
 class NotHeaderException(errorLine:String) extends Exception{
   override def getMessage: String = {
-    errorLine +
-      "is not a valid header which form is Key: Value \r\n" +
+    s"<$errorLine>" +
+      " is not a valid header which form is Key: Value \r\n" +
       super.getMessage
   }
 
