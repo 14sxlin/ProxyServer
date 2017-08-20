@@ -8,9 +8,13 @@ import entity.request.Request
   * pass any thing about connection alive, so this handler <br/>
   * helps to get rid of related headers from request or response
   */
-class ProxyHeaderFilter extends HeaderFilter {
+object ProxyHeaderFilter extends HeaderFilter {
 
   override def handle(request: Request): Request = {
+    if(request == null)
+      return Request.EMPTY
+    assert(request.headers != null)
+
     val dropHeader = request.headers.find(nameValue => {
       val header = nameValue._1
       header == "Connection"
