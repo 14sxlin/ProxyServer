@@ -1,6 +1,7 @@
 package utils.http
 
 import entity.Response
+import org.apache.commons.lang3.StringUtils
 import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.impl.client.HttpClients
 import org.apache.http.util.EntityUtils
@@ -12,6 +13,14 @@ object HttpUtils {
 
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
+  val establishConnectInfo : String =
+    "HTTP/1.1 200 Connection Established\n" +
+    "Content-Length: 0\n\n"
+
+  val unauthenicationInfo : String =
+    "HTTP/1.1 407 Unauthorized\n" +
+    "Content-Length: 0\n\n"
+
   def execute(request: HttpUriRequest): Response = {
     val client = HttpClients.createDefault()
     val httpResponse = client.execute(request)
@@ -19,7 +28,11 @@ object HttpUtils {
     val response = Response(
       httpResponse.getStatusLine.toString,
       httpResponse.getAllHeaders.map(h => (h.getName, h.getValue)),
-      EntityUtils.toString(httpResponse.getEntity))
+      httpResponse.getEntity match {
+        case null => StringUtils.EMPTY
+        case _ => EntityUtils.toString(httpResponse.getEntity)
+      }
+    )
 
     httpResponse.close()
     client.close()

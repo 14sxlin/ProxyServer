@@ -74,7 +74,7 @@ object HttpClientRun extends App{
     new Thread(task)
   }
 
-  val thread = doGetByProxy()
+  val thread = doPostByProxy()
   thread.start()
   thread.join()
 
