@@ -4,23 +4,18 @@ import java.net.Socket
 
 import org.slf4j.{Logger, LoggerFactory}
 
-
 /**
-  * Created by linsixin on 2017/8/11.
-  * This class holds the socket connection<br/>
-  * Be responsible for reading data from socket <br/>
-  * or sending data to client
-  *
+  * Created by sparr on 2017/8/20.
   */
-class ClientConnection(val socket: Socket) extends TimeBasingAutoCloseConnection {
+case class ServerConnection(socket: Socket) extends TimeBasingAutoCloseConnection{
 
-  override val logger: Logger = LoggerFactory.getLogger(getClass)
+  def this(host:String,port:Int) = {
+    this(new Socket(host,port))
+  }
 
   override def openConnection(): Unit = {
-    logger.info(s"start read in : ${socket.getInetAddress}")
     out = socket.getOutputStream
     in = socket.getInputStream
-    logger.debug("setup stream success")
     super.openConnection()
   }
 
