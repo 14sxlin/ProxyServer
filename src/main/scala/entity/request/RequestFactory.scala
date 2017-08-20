@@ -1,14 +1,16 @@
 package entity.request
 
 import constants.HttpRequestMethod
+import entity.body.EncryptData
 import exception.NotHeaderException
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.{Logger, LoggerFactory}
 
 /**
-  * Created by linsixin on 2017/8/12.
-  * This is object due to read input stream and <br/>
-  * build up a request class
+  * Created by linsixin on 2017/8/20.
+  * This is object due to read input stream and
+  * build up a request class, which separates
+  * request line,headers and body
   */
 object RequestFactory {
   val logger: Logger = LoggerFactory.getLogger(getClass)
@@ -16,15 +18,13 @@ object RequestFactory {
   private val NOT_FOUND = -1
 
   def buildRequest(requestRawData: String): Request = {
+
     if (requestRawData == null) {
       logger.warn("request raw data is null")
       return Request.EMPTY
     }
-
     val parts = getParts(requestRawData)
     val firstLine = parts(0)
-
-    parts.foreach(p => logger.info(s"<part : $p>"))
 
     if(isNotCorrectHttpLine(firstLine)){
       logger.warn(s"$firstLine is not correct begin")
@@ -34,9 +34,6 @@ object RequestFactory {
       logger.warn(s"request raw data is informal: $requestRawData")
       return Request.EMPTY
     }
-
-
-    logger.info(firstLine)
 
     if(hasBodyPart(parts)){
       logger.info("<has body/>")
@@ -50,6 +47,8 @@ object RequestFactory {
   private def getParts(requestRawData: String): Array[String] = {
     requestRawData.trim.split("\n").map(_.trim)
   }
+
+
   def isNotCorrectHttpLine(firstLine:String): Boolean = {
     if(firstLine == null){
       logger.info("first line is null")

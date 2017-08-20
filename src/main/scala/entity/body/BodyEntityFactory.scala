@@ -16,8 +16,10 @@ object BodyEntityFactory {
       throw new Exception("empty request")
 
     val uri = request.firstLineInfo._2
-    if (uri.endsWith(":443"))
+    if (uri.endsWith(":443")) {
+      logger.info("detect 443 : encrypt data type")
       EncryptData(request.body)
+    }
     else {
       createByContentType(request)
     }
@@ -28,7 +30,8 @@ object BodyEntityFactory {
       case Some(contentType) =>
         createByContentType(contentType, request.body)
       case None =>
-        TextPlain(request.body)
+        logger.info("no Content-Type : encrypt type body")
+        EncryptData(request.body)
     }
   }
 

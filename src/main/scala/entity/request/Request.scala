@@ -1,6 +1,8 @@
 package entity.request
 
 import entity.request.EntityUtils.header2String
+import org.apache.commons.lang3.StringUtils
+import org.apache.http.HttpHeaders
 
 /**
   * Created by linsixin on 2017/8/12.
@@ -67,6 +69,19 @@ case class Request(firstLine: String,
       case None =>
         None
     }
+  }
+
+  def getContentEncoding :Option[String] = {
+    getHeaderValue(HttpHeaders.CONTENT_TYPE) match {
+      case Some(contentType) =>
+        val encode = StringUtils.substringAfter(contentType,"charset=")
+        if(encode.isEmpty)
+          None
+        else Some(encode)
+      case None =>
+        None
+    }
+
   }
 
 

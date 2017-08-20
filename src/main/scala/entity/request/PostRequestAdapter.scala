@@ -1,15 +1,16 @@
 package entity.request
 
-import entity.body.{BodyWrappedRequest, FormParams, TextPlain}
+import entity.body.{EmptyBody, FormParams, TextPlain}
+import org.apache.http.Consts
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpPost, HttpUriRequest}
-import org.apache.http.entity.StringEntity
+import org.apache.http.entity.{ByteArrayEntity, ContentType, StringEntity}
 import org.apache.http.message.BasicNameValuePair
 
 import scala.collection.JavaConversions._
 
 /**
-  * Created by sparr on 2017/8/19.
+  * Created by linsixin on 2017/8/19.
   */
 object PostRequestAdapter extends RequestAdapter {
 
@@ -24,18 +25,20 @@ object PostRequestAdapter extends RequestAdapter {
 
   def putBodyToPost(request: Request, post: HttpPost): Unit = {
     request match {
-      case wrappedRequest: BodyWrappedRequest =>
+      case wrappedRequest: WrappedRequest =>
         putBodyEntityToPost(wrappedRequest, post)
 
       case _ if !request.body.isEmpty =>
-        putStringEntityToPost(request.body, post)
+        putBinaryToPost(request.body.getBytes(), post)
 
     }
   }
 
-  def putBodyEntityToPost(wrappedRequest: BodyWrappedRequest,
+  def putBodyEntityToPost(wrappedRequest: WrappedRequest,
                           post: HttpPost): Unit = {
     wrappedRequest.bodyEntity match {
+      case EmptyBody => ()
+
       case text: TextPlain =>
         putStringEntityToPost(text.data, post)
 
@@ -43,7 +46,7 @@ object PostRequestAdapter extends RequestAdapter {
         putFormParamToPost(form, post)
 
       case _ =>
-        putStringEntityToPost(wrappedRequest.rawBody, post)
+        putBinaryToPost(wrappedRequest.rawBody.getBytes, post)
     }
   }
 
@@ -61,5 +64,11 @@ object PostRequestAdapter extends RequestAdapter {
     val formParams = new UrlEncodedFormEntity(nameValuePairs.toList)
     formParams.setChunked(true)
     post.setEntity(formParams)
+  }
+
+  def putBinaryToPost(data:Array[Byte], post: HttpPost):Unit = {
+    val binary = new ByteArrayEntity(data)
+    binary.setChunked(true)
+    post.setEntity(binary)
   }
 }

@@ -8,7 +8,8 @@ import org.apache.http.client.methods.{HttpGet, HttpUriRequest}
 object GetRequestAdapter extends RequestAdapter {
 
   override def adapt(request: Request): HttpUriRequest = {
-    val httpGet = new HttpGet(request.firstLineInfo._2)
+    val uri = request.firstLineInfo._2
+    val httpGet = new HttpGet(uri)
     putHeaders(request, httpGet)
     httpGet
   }
