@@ -9,9 +9,6 @@ import org.scalatest.FunSuite
   */
 class TestProxyHeaderHandler extends FunSuite{
 
-  val filter = new ProxyHeaderFilter
-
-
   val headers1 = Array(
     ("Connection","Host"),
     ("Proxy-Auth","####"),
@@ -21,7 +18,7 @@ class TestProxyHeaderHandler extends FunSuite{
   val request1 = Request("", headers1, "")
 
   test("test handle filter one header"){
-    val result = filter.handle(request1).headers
+    val result = ProxyHeaderFilter.handle(request1).headers
 
     assert(result.length == 1 &&
       result(0)._1 == "Keep-Alive" &&
@@ -39,7 +36,7 @@ class TestProxyHeaderHandler extends FunSuite{
   )
   val request2 = Request("", headers2, "")
   test("test handle filter more header"){
-    val result = filter.handle(request2).headers
+    val result = ProxyHeaderFilter.handle(request2).headers
 
     assert(result.length == 1 &&
       result(0)._1 == "Keep-Alive" &&
