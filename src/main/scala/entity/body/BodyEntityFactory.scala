@@ -2,6 +2,7 @@ package entity.body
 
 import entity.body.FormParams.postBody2Param
 import entity.request.Request
+import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
 /**
@@ -19,8 +20,7 @@ object BodyEntityFactory {
     if (uri.endsWith(":443")) {
       logger.info("detect 443 : encrypt data type")
       EncryptData(request.body)
-    }
-    else {
+    }else {
       createByContentType(request)
     }
   }
@@ -42,7 +42,9 @@ object BodyEntityFactory {
         TextPlain(body)
       case _ if contentType == "application/x-www-form-urlencoded" =>
         logger.info(s"$contentType => FormParams")
-        FormParams(postBody2Param(body))
+        if(StringUtils.substringAfter(contentType,"charset=").isEmpty)
+          EncryptData(body)
+        else  FormParams(postBody2Param(body))
       case _ =>
         logger.info(s"$contentType => EncryptData")
         EncryptData(body)

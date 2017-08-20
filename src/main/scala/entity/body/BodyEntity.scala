@@ -16,6 +16,8 @@ case class EncryptData(data: String) extends BodyEntity
 
 case class FormParams(params: Array[(String, String)]) extends BodyEntity
 
+case object EmptyBody extends BodyEntity
+
 object FormParams {
   /**
     * transform post data in raw to (name,value) array<br/>
