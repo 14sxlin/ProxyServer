@@ -3,7 +3,13 @@ package connection
 import org.slf4j.{Logger, LoggerFactory}
 
 /**
-  * Created by sparr on 2017/8/20.
+  * Created by linsixin on 2017/8/20.
+  * CloseWhenNotActive trait will start a thread
+  * to check whether some it's active. Implementation
+  * of this trait should use updateActiveTime() method
+  * to notify that it's active. Also it needs to implement
+  * timeToClose() method to declare what should be close when
+  * not active
   */
 trait CloseWhenNotActive {
 

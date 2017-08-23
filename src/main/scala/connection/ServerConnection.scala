@@ -14,6 +14,8 @@ case class ServerConnection(socket: Socket) extends TimeBasingAutoCloseConnectio
   }
 
   override def openConnection(): Unit = {
+    if(connectionOpen)
+      return
     out = socket.getOutputStream
     in = socket.getInputStream
     super.openConnection()
