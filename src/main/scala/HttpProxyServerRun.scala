@@ -1,7 +1,11 @@
-import connection.{ClientConnection, ConnectionReceiver, DefaultConnectionPool, ServerConnection}
+import java.net.SocketException
+
+import connection._
 import entity.request._
+import entity.response.ChuckHandler
 import filter.header.{ContentLengthFilter, ProxyHeaderFilter}
 import org.slf4j.LoggerFactory
+import scritps.HexAnalyse
 import task.TaskFactory
 import utils.http.HttpUtils
 
@@ -29,18 +33,23 @@ object HttpProxyServerRun extends App{
     val receiver = ConnectionReceiver(port, new DefaultConnectionPool)
     val clientConnection = receiver.accept()
     logger.info(s"receive connection...$clientConnection")
+    clientConnection.openConnection()
+    clientConnection.closeWhenNotActiveIn(10000L)
     new Thread(new Runnable {
       override def run(): Unit =
-        startNewThreadToProcess(clientConnection)
+        try{
+          while(true){
+            startNewThreadToProcess(clientConnection)
+          }
+        }catch {
+          case e: SocketException =>
+            logger.warn("socket has closed",e)
+        }
     }).start()
   }
 
   private def startNewThreadToProcess(client: ClientConnection) = {
-    client.openConnection()
-    client.closeWhenNotActiveIn(10000L)
-
     val requestRaw = client.readTextData()
-
     val request =
       ContentLengthFilter.handle(
         ProxyHeaderFilter.handle(
@@ -72,7 +81,9 @@ object HttpProxyServerRun extends App{
 
       val task = TaskFactory.createTask(httpUriRequest)
       task.onSuccess = (response) => {
-        client.writeTextData(response.mkHttpString)
+        client.writeTextData(
+          ChuckHandler.handler(response).mkHttpString
+        )
 //        clientConnection.closeAllResource()
       }
       task.begin()
@@ -87,16 +98,16 @@ object HttpProxyServerRun extends App{
     if(authenticate) {
       val establishInfo = HttpUtils.establishConnectInfo
       client.writeTextData(establishInfo)
-      val data = client.readBinaryData()
       val serverCon = new ServerConnection(host,port)
       serverCon.openConnection()
-      logger.info(s"connect to $host:$port....")
-      serverCon.writeBinaryData(data)
-      logger.info(s"transfer data  to server...")
-      val response = serverCon.readBinaryData()
-      logger.info(s"get response:\n ${new String(response)}")
-      client.writeBinaryData(response)
-      logger.info(s"response to client and close resource")
+      val transfer = new DataTransfer(client,serverCon)
+      transfer.communicate()
+//      logger.info(s"connect to $host:$port....")
+//      serverCon.writeBinaryData(data)
+//      logger.info(s"transfer data  to server...")
+//      val response = serverCon.readBinaryData()
+//      logger.info(s"get response:\n ${new String(response)}\n")
+//      client.writeBinaryData(response)
 
       serverCon.closeWhenNotActiveIn(1000L)
       client.closeWhenNotActiveIn(1000L)
