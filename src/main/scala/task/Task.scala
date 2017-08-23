@@ -1,6 +1,6 @@
 package task
 
-import entity.Response
+import entity.response.Response
 import org.apache.http.client.methods.HttpUriRequest
 import org.slf4j.{Logger, LoggerFactory}
 
