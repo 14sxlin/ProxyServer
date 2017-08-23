@@ -19,6 +19,7 @@ class HttpClientMock {
 
   val logger = LoggerFactory.getLogger(getClass)
 
+
   val localPostUri = "http://localhost:8080/LoginDemo/login.do"
   val targetHost = "localhost"
   val targetPort = "8080"
