@@ -1,6 +1,6 @@
 package utils.http
 
-import entity.Response
+import entity.response.Response
 import org.apache.commons.lang3.StringUtils
 import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.impl.client.HttpClients
@@ -25,12 +25,13 @@ object HttpUtils {
     val client = HttpClients.createDefault()
     val httpResponse = client.execute(request)
 
+    val entity = httpResponse.getEntity
     val response = Response(
       httpResponse.getStatusLine.toString,
       httpResponse.getAllHeaders.map(h => (h.getName, h.getValue)),
-      httpResponse.getEntity match {
+      entity match {
         case null => StringUtils.EMPTY
-        case _ => EntityUtils.toString(httpResponse.getEntity)
+        case _ => EntityUtils.toString(entity).trim
       }
     )
 
