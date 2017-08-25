@@ -9,7 +9,7 @@ import org.scalatest.FunSuite
 class TestRequest extends FunSuite{
 
 
-  test("test request to string"){
+  test("test session to string"){
     val req1 = Request("GET www.baidu.com http/1.1",
       Array(
         ("Host","localhost"),

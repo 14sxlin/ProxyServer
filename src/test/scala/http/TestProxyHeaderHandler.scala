@@ -1,7 +1,7 @@
 package http
 
 import entity.request.Request
-import filter.header.ProxyHeaderFilter
+import filter.request.ProxyHeaderFilter
 import org.scalatest.FunSuite
 
 /**
