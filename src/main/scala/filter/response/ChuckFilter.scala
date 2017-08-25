@@ -1,11 +1,12 @@
-package entity.response
+package filter.response
 
+import entity.response.Response
 import org.apache.http.HttpHeaders
 
 /**
   * Created by sparr on 2017/8/23.
   */
-object ChuckHandler extends ResponseHandler{
+object ChuckFilter extends ResponseFilter {
 
   val transferEncoding = HttpHeaders.TRANSFER_ENCODING
   override def handler(response: Response): Response = {
