@@ -1,6 +1,6 @@
 package entity.request
 
-import entity.body.{BodyEntityFactory, EmptyBody, EncryptData}
+import entity.body.BodyEntityFactory
 
 /**
   * Created by sparr on 2017/8/20.<br/>

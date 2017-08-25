@@ -3,8 +3,8 @@ package entity.request
 import org.apache.http.client.methods.HttpUriRequest
 
 /**
-  * Created by linsixin on 2017/8/20.<br/>
-  * Change Request or WrapRequest to HttpRequest
+  * Created by linsixin on 2017/8/20.
+  * Change Request or WrapRequest to HttpUriRequest
   * that HttpClient used to send Http request to
   * server later.
   *

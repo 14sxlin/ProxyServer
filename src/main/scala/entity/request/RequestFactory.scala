@@ -1,7 +1,6 @@
 package entity.request
 
 import constants.HttpRequestMethod
-import entity.body.EncryptData
 import exception.NotHeaderException
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.{Logger, LoggerFactory}
