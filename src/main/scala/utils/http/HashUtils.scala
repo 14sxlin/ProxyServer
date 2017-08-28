@@ -13,6 +13,6 @@ object HashUtils {
 
   def getHash(con: ClientConnection, request: Request) : String = {
     s"${con.socket.getLocalAddress.toString}:${con.socket.getLocalPort}-" +
-    s"${request.getHost}"
+    s"${request.getHost.getOrElse("unknown-host"))}"
   }
 }

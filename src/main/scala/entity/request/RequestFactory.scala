@@ -54,8 +54,8 @@ object RequestFactory {
 
   private def buildRequestWithBody(firstLine:String,parts:Array[String]) = {
     if (parts.length > 2) {
-      val headers = parts.slice(1, parts.length - 2).map(parseHeaderInLine)
       val indexOfEmptyLine = parts.indexOf("")
+      val headers = parts.slice(1, indexOfEmptyLine).map(parseHeaderInLine)
       val body = parts.slice(indexOfEmptyLine+1,parts.length).mkString
       Request(firstLine, headers, body)
     } else {
