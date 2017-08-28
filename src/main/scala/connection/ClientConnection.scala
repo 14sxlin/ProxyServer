@@ -14,7 +14,8 @@ import org.slf4j.{Logger, LoggerFactory}
   */
 class ClientConnection(val socket: Socket) extends TimeBasingAutoCloseConnection {
 
-  override val logger: Logger = LoggerFactory.getLogger(getClass)
+
+  override protected val name = s"Client-${socket.getInetAddress.toString}"
 
   override def openConnection(): Unit = {
     if(connectionOpen)

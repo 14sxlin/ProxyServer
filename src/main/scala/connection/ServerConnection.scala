@@ -5,9 +5,12 @@ import java.net.Socket
 import org.slf4j.{Logger, LoggerFactory}
 
 /**
-  * Created by sparr on 2017/8/20.
+  * Created by linsixin on 2017/8/20.
   */
 case class ServerConnection(socket: Socket) extends TimeBasingAutoCloseConnection{
+
+
+  override protected val name = s"Server-${socket.getInetAddress.toString}"
 
   def this(host:String,port:Int) = {
     this(new Socket(host,port))

@@ -1,6 +1,10 @@
 package connection
 
+import java.net.SocketException
+
 import org.slf4j.LoggerFactory
+
+import scala.annotation.tailrec
 
 /**
   * Created by linsixin on 2017/8/20.
@@ -10,7 +14,7 @@ import org.slf4j.LoggerFactory
 class DataTransfer(client: ClientConnection,
                    server: ServerConnection) {
 
-  val logger = LoggerFactory.getLogger(getClass)
+  private val logger = LoggerFactory.getLogger(getClass)
   /**
     * Read data from client and transfer to
     * server. It may block while reading data
@@ -18,13 +22,20 @@ class DataTransfer(client: ClientConnection,
     * SocketException when connection has been
     * closed.
     *
-    * @return
+    * @return transfer data(bytes) length
     */
   def transOnceFromClientToServer(): Int = {
     checkIfConnectionOpen()
-    val data = client.readBinaryData()
-    server.writeBinaryData(data)
-    data.length
+    client.readBinaryData() match {
+      case Some(data) =>
+        logger.info(s"tran length = ${data.length}")
+        server.writeBinaryData(data)
+        data.length
+      case None =>
+        logger.warn("try to transfer empty from server to client")
+        throw new SocketException("client has nothing to read")
+    }
+
   }
 
   /**
@@ -34,37 +45,50 @@ class DataTransfer(client: ClientConnection,
     * SocketException when connection has been
     * closed.
     *
-    * @return
+    * @return transfer data(bytes) length
     */
   def transOnceFromServerToClient(): Int = {
     checkIfConnectionOpen()
-    val data = server.readBinaryData()
-    client.writeBinaryData(data)
-    data.length
+    server.readBinaryData() match {
+      case Some(data) =>
+        logger.info(s"tran length = ${data.length}")
+        client.writeBinaryData(data)
+        data.length
+      case None =>
+        logger.warn("try to transfer empty from server to client")
+        throw new SocketException("server has nothing to read")
+    }
   }
 
+  /**
+    * This method should be block method.
+    * It will allow other to decide whether
+    * it should run in a thread or not.
+    */
   def communicate(): Unit = {
     checkIfConnectionOpen()
-    val client2ServerThread = new Thread(new Runnable {
-      override def run(): Unit ={
+    tryMaybeSocketClosed{
+      while(true){
         logger.info("from client to server")
         transOnceFromClientToServer()
-      }
-    })
-    val server2ClientThread = new Thread(new Runnable {
-      override def run(): Unit ={
         logger.info("from server to client")
         transOnceFromServerToClient()
       }
-    })
-
-    client2ServerThread.start()
-    server2ClientThread.start()
+    }
   }
 
   private def checkIfConnectionOpen() = {
     if(!(client.connectionOpen && server.connectionOpen))
       throw new IllegalStateException("connection not open")
+  }
+
+  private def tryMaybeSocketClosed(run : => Unit) = {
+    try{
+      run
+    }catch{
+      case  e : SocketException =>
+        logger.error(s"socket closed : ${e.getMessage}...")
+    }
   }
 
 }

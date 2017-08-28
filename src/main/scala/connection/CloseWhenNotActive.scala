@@ -1,6 +1,6 @@
 package connection
 
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.LoggerFactory
 
 /**
   * Created by linsixin on 2017/8/20.
@@ -17,6 +17,8 @@ trait CloseWhenNotActive {
 
   private var last : Long = System.currentTimeMillis()
 
+  protected val name:String
+
   def timeToClose():Unit
 
   def updateActiveTime():Unit = {
@@ -30,13 +32,15 @@ trait CloseWhenNotActive {
         while(System.currentTimeMillis() - last < afterSecondClose) {
           val left = afterSecondClose-(System.currentTimeMillis() - last)
           logger.info(s"not ready to close left ${left/1000}s")
-          Thread.sleep(left)
+          if(left > 1000)
+            Thread.sleep(left)
         }
-        logger.info("time over, close resource")
+        logger.info(s"time over, close resource : $getClass")
         timeToClose()
       }
     }
     val monitor = new Thread(monitorRun)
+    monitor.setName(s"$name-Monitor")
     monitor.start()
   }
 

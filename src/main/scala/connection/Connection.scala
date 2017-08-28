@@ -3,7 +3,7 @@ package connection
 import java.io.{InputStream, OutputStream}
 
 import org.slf4j.{Logger, LoggerFactory}
-import scritps.HexAnalyse
+import utils.http.HexUtils
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
@@ -31,35 +31,49 @@ trait Connection {
     connectionOpen = true
   }
 
-  def readBinaryData(): Array[Byte] = {
+  /**
+    * read data from socket
+    * @return return read bytes and remember to check
+    *         whether the data is empty
+    */
+  def readBinaryData(): Option[Array[Byte]] = {
     checkConnectionOpen()
     val total = ArrayBuffer[Byte]()
     var totalLen = 0
     val buffer = new Array[Byte](1024)
 
     @tailrec
-    def readUtilBufferNotFull():Unit = {
+    def readUntilBufferNotFull():Unit = {
       val length = in.read(buffer)
-      if(length == -1)
+      if(length == -1){
+        logger.info("read nothing ,socket close, get -1")
         return
+      }
+
       total ++= buffer.slice(0, length)
       totalLen += length
       if(length == buffer.length)
-        readUtilBufferNotFull()
+        readUntilBufferNotFull()
     }
-
-    readUtilBufferNotFull()
-    logger.info(s"total length = $totalLen")
-    logger.info(s"total data = \n${new String(total.toArray,"utf-8")}\n\n" +
-      s"bytes: \n${HexAnalyse.toHex(total.toArray)}\n")
-    total.toArray
+    readUntilBufferNotFull()
+    if(totalLen == 0)
+      return None
+    logger.info(s"total read length = $totalLen ")
+//    logger.info(s"total read data(gbk) : \n${new String(total.toArray,"gbk")}\n")
+//    logger.info(s"total read data(utf-8): \n${new String(total.toArray,"utf-8")}\n" +
+//      s"----------------------------------------------\r\n" +
+//      s"bytes: \n${HexUtils.toHex(total.toArray)}")
+    Some(total.toArray)
   }
 
-  def readTextData(encode:String = "gbk"): String = {
+  def readTextData(encode:String = "utf-8"): Option[String] = {
     checkConnectionOpen()
-    val data = readBinaryData()
-    val strData = new String(data,encode).trim
-    strData
+    readBinaryData() match {
+      case None => None
+      case Some(data) =>
+        val strData = new String(data,encode).trim
+        Some(strData)
+    }
   }
 
   def writeBinaryData(data:Array[Byte]):Unit = {
@@ -70,7 +84,8 @@ trait Connection {
 
   def writeTextData(data: String): Unit = {
     checkConnectionOpen()
-    logger.info(s"write \n$data\nto end : length=${data.length}")
+//    logger.info(s"write \n$data\nto end : length=${data.length}")
+    logger.info(s"write ${data.length} of data  to end ")
     writeBinaryData(data.getBytes)
   }
 
