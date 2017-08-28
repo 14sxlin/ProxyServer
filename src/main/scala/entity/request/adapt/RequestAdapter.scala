@@ -1,5 +1,6 @@
-package entity.request
+package entity.request.adapt
 
+import entity.request.Request
 import org.apache.http.client.methods.HttpUriRequest
 
 /**

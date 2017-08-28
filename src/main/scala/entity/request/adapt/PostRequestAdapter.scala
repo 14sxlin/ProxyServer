@@ -1,10 +1,11 @@
-package entity.request
+package entity.request.adapt
 
 import entity.body.{EmptyBody, FormParams, TextPlain}
-import org.apache.http.Consts
+import entity.request.Request
+import entity.request.wrapped.WrappedRequest
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpPost, HttpUriRequest}
-import org.apache.http.entity.{ByteArrayEntity, ContentType, StringEntity}
+import org.apache.http.entity.{ByteArrayEntity, StringEntity}
 import org.apache.http.message.BasicNameValuePair
 
 import scala.collection.JavaConversions._
