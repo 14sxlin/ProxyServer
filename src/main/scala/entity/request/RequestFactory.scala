@@ -18,20 +18,15 @@ object RequestFactory {
 
   def buildRequest(requestRawData: String): Request = {
 
-    if (requestRawData == null) {
-      logger.warn("request raw data is null")
+    if (requestRawData.isEmpty) {
+      logger.warn("request raw data is empty")
       return Request.EMPTY
     }
     val parts = getParts(requestRawData)
     val firstLine = parts(0)
 
-    if(isNotCorrectHttpLine(firstLine)){
-      logger.warn(s"$firstLine is not correct begin")
-      return Request.EMPTY
-    }
-    if (parts.length == 0) {
-      logger.warn(s"request raw data is informal: $requestRawData")
-      return Request.EMPTY
+    if(isNotCorrectHttpLine(firstLine) || parts.length == 0){
+      return new TotalEncryptRequest(requestRawData)
     }
 
     if(hasBodyPart(parts)){
@@ -47,7 +42,6 @@ object RequestFactory {
     requestRawData.trim.split("\n").map(_.trim)
   }
 
-
   def isNotCorrectHttpLine(firstLine:String): Boolean = {
     if(firstLine == null){
       logger.info("first line is null")
@@ -61,7 +55,8 @@ object RequestFactory {
   private def buildRequestWithBody(firstLine:String,parts:Array[String]) = {
     if (parts.length > 2) {
       val headers = parts.slice(1, parts.length - 2).map(parseHeaderInLine)
-      val body = parts.last
+      val indexOfEmptyLine = parts.indexOf("")
+      val body = parts.slice(indexOfEmptyLine+1,parts.length).mkString
       Request(firstLine, headers, body)
     } else {
       assert(parts.length == 2, "no header with body part length should be 2")

@@ -2,10 +2,7 @@ package entity.request.dispatch
 
 import java.util.concurrent.ConcurrentHashMap
 
-import entity.request.Request
 import org.apache.http.client.methods.HttpUriRequest
-
-import scala.collection.mutable
 
 /**
   * Created by linsixin on 2017/8/25.
@@ -14,18 +11,32 @@ object RequestDispatcher {
 
   private val map = new ConcurrentHashMap[String, RequestSession]()
 
-  def dispatch(hash:String,
-               request:HttpUriRequest):RequestSession = {
-    if(map.contains(hash)){
-      val session = map.get(hash)
+  /**
+    *
+    * @param key     a string represent the same connection
+    *                It's "{client socket's address}:{client's port}:{Server's uri}"
+    * @param request HttpClient uri request
+    * @return if there already has this hash
+    */
+  def dispatch(key: String,
+               request: HttpUriRequest): Boolean = {
+    if (map.contains(key)) {
+      val session = map.get(key)
       session.put(request)
-      session
+      true
     }else{
-      val newSession = new RequestSession(hash)
+      val newSession = new RequestSession(key)
       newSession.put(request)
-      map.put(hash,newSession)
-      newSession
+      map.put(key, newSession)
+      false
     }
+  }
+
+  def getRequestSession(key: String): Option[RequestSession] = {
+    if (map.containsKey(key))
+      Some(map.get(key))
+    else
+      None
   }
 
 

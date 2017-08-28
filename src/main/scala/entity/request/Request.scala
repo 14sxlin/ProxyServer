@@ -56,6 +56,18 @@ case class Request(firstLine: String,
     }
   }
 
+  def method : String = {
+    firstLineInfo._1
+  }
+
+  def uri : String = {
+    firstLineInfo._2
+  }
+
+  def version : String = {
+    firstLineInfo._3
+  }
+
   def headersContains(headerName: String): Boolean = {
     if (headers.isEmpty)
       false
@@ -84,6 +96,9 @@ case class Request(firstLine: String,
 
   }
 
+  def getHost : Option[String] = {
+    getHeaderValue(HttpHeaders.HOST)
+  }
 
 }
 
