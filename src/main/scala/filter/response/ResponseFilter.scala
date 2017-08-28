@@ -7,6 +7,6 @@ import entity.response.Response
   */
 trait ResponseFilter {
 
-  def handler(response: Response):Response
+  def handle(response: Response):Response
 
 }

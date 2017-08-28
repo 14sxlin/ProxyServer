@@ -9,7 +9,7 @@ import org.apache.http.HttpHeaders
 object ChuckFilter extends ResponseFilter {
 
   val transferEncoding = HttpHeaders.TRANSFER_ENCODING
-  override def handler(response: Response): Response = {
+  override def handle(response: Response): Response = {
     if(!response.headers.map(nameValue => nameValue._1 )
                 .contains(transferEncoding))
       return response
