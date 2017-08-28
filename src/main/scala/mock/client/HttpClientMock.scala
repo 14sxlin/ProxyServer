@@ -1,5 +1,7 @@
 package mock.client
 
+import java.io.FileOutputStream
+
 import org.apache.http.HttpHost
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.entity.UrlEncodedFormEntity
@@ -8,12 +10,13 @@ import org.apache.http.impl.client.HttpClients
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.util.EntityUtils
 import org.slf4j.LoggerFactory
+import utils.http.{FileUtils, IOUtils}
 
 import scala.collection.JavaConversions._
 
 
 /**
-  * Created by sparr on 2017/8/5.
+  * Created by linsixin on 2017/8/5.
   */
 class HttpClientMock {
 
@@ -84,11 +87,13 @@ class HttpClientMock {
     for( header <- response.getAllHeaders)
       logger.info("{}",header)
 
-    val content = EntityUtils.toString(response.getEntity)
+    val entity = response.getEntity
+    val content = IOUtils.dataFromInputStream(entity.getContent)
+    FileUtils.save2File("logs/test.jpg",content)
     response.close()
     client.close()
 
-    content
+    new String(content,"utf-8")
   }
 
 

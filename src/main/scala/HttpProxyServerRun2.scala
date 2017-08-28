@@ -1,6 +1,7 @@
 import java.net.SocketException
 
 import connection._
+import constants.LoggerMark
 import entity.request._
 import entity.request.adapt.{GetRequestAdapter, PostRequestAdapter, RequestAdapter}
 import entity.request.dispatch.{RequestDispatcher, RequestSessionConsumeThread}
@@ -36,7 +37,7 @@ object HttpProxyServerRun2 extends App {
   def begin(): Unit = {
     val receiver = ConnectionReceiver(port, new DefaultConnectionPool)
     val clientConnection = receiver.accept()
-    logger.info(s"receive connection...$clientConnection")
+
     clientConnection.openConnection()
     new Thread(new Runnable {
       override def run(): Unit =
@@ -65,11 +66,15 @@ object HttpProxyServerRun2 extends App {
         responseAndAskForNewData(client,host,port)
       case _ => //post get
         val hash = HashUtils.getHash(client,wrappedRequest)
+
         val onSuccess = (response: Response) => {
-          logger.info(s"successfully get response , write ${response.firstLine} to client")
-          client.writeTextData(
-            ResponseContentLengthFilter.handle(ChuckFilter.handle(response)).mkHttpString
-          )
+          val data = ResponseContentLengthFilter.handle(
+            ChuckFilter.handle(response))
+            .mkHttpBinary()
+          logger.info(s"${LoggerMark.down} " +
+            s"${response.firstLine}  " +
+            s"${data.length} to client")
+          client.writeBinaryData(data)
         }
         processGetOrPostRequest(hash,wrappedRequest,onSuccess)
 
@@ -90,7 +95,7 @@ object HttpProxyServerRun2 extends App {
   def readAndParseToWrappedRequest(client: ClientConnection):WrappedRequest = {
     client.readTextData() match {
       case Some(rawRequest) =>
-        logger.info("raw \n" + rawRequest)
+        logger.info(s"${LoggerMark.up} raw \n" + rawRequest)
         val request =
           RequestContentLengthFilter.handle(
             ProxyHeaderFilter.handle(
@@ -121,18 +126,23 @@ object HttpProxyServerRun2 extends App {
     val alreadyHasSession =
           RequestDispatcher.dispatch(hash,httpUriRequest)
     if(!alreadyHasSession){ //if it's a new session should start new thread
-      logger.info(s"new request session, start new queue consumer: $hash")
+      logger.info(s"${LoggerMark.resource} start new queue consumer: $hash")
       RequestDispatcher.getRequestSession(hash) match{
         case Some(requestSession) =>
-          new RequestSessionConsumeThread(
+          val consumeThread = new RequestSessionConsumeThread(
             requestSession,
             proxy,
             onSuccess
-          ).start()
+          )
+          consumeThread.setName("Queue-consumer")
+          consumeThread.start()
         case None =>
           throw new Exception("no request session !")
       }
+    }else{
+      logger.info(s"${LoggerMark.resource} add new request to same context")
     }
+
   }
 
 

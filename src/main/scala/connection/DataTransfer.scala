@@ -2,9 +2,8 @@ package connection
 
 import java.net.SocketException
 
+import constants.LoggerMark
 import org.slf4j.LoggerFactory
-
-import scala.annotation.tailrec
 
 /**
   * Created by linsixin on 2017/8/20.
@@ -51,11 +50,9 @@ class DataTransfer(client: ClientConnection,
     checkIfConnectionOpen()
     server.readBinaryData() match {
       case Some(data) =>
-        logger.info(s"tran length = ${data.length}")
         client.writeBinaryData(data)
         data.length
       case None =>
-        logger.warn("try to transfer empty from server to client")
         throw new SocketException("server has nothing to read")
     }
   }
@@ -69,20 +66,20 @@ class DataTransfer(client: ClientConnection,
     checkIfConnectionOpen()
     tryMaybeSocketClosed{
       while(true){
-        logger.info("from client to server")
-        transOnceFromClientToServer()
-        logger.info("from server to client")
-        transOnceFromServerToClient()
+        val toServer = transOnceFromClientToServer()
+        logger.info(s"${LoggerMark.up} length: $toServer")
+        val toClient = transOnceFromServerToClient()
+        logger.info(s"${LoggerMark.down} length: $toClient")
       }
     }
   }
 
-  private def checkIfConnectionOpen() = {
+  private def checkIfConnectionOpen(): Unit = {
     if(!(client.connectionOpen && server.connectionOpen))
       throw new IllegalStateException("connection not open")
   }
 
-  private def tryMaybeSocketClosed(run : => Unit) = {
+  private def tryMaybeSocketClosed(run : => Unit): Unit = {
     try{
       run
     }catch{

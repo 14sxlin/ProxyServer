@@ -1,6 +1,6 @@
 package entity
 
-import entity.response.Response
+import entity.response.TextResponse
 import filter.response.ResponseContentLengthFilter
 import org.apache.http.HttpHeaders
 import org.scalatest.FunSuite
@@ -18,7 +18,7 @@ class TestResponseContentLength extends FunSuite{
       ("Content-Type","asdjfbskadjf")
     )
     val body = "1234456"
-    val response = Response("##########",headers,body)
+    val response = TextResponse("##########",headers,body)
     val newResponse = ResponseContentLengthFilter.handle(response)
     val newHeaders = newResponse.headers
     assert(newHeaders.contains((contentLength,""+body.length)))

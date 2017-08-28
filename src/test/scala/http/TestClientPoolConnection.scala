@@ -2,22 +2,39 @@ package http
 
 import java.util.concurrent.ArrayBlockingQueue
 
+import entity.response.{BinaryResponse, TextResponse}
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.protocol.HttpClientContext
 import org.scalatest.{FunSuite, Ignore}
+import utils.http.HexUtils
 
 /**
-  * Created by sparr on 2017/8/25.
+  * Created by linsixin on 2017/8/25.
   */
 class TestClientPoolConnection extends FunSuite{
   test("test get localhost"){
     val httpUri = new HttpGet("http://localhost:8080/LoginDemo")
     val context = HttpClientContext.create()
     val poolingClient = new ConnectionPoolingClient
-    assert(poolingClient.doRequest(httpUri,context).body.length!=0)
+    poolingClient.doRequest(httpUri,context) match {
+      case r:TextResponse =>
+        println(r.mkHttpString)
+        assert(r.body.length!=0)
+      case r:BinaryResponse =>
+        println(r.mkHttpString())
+        assert(r.body.length!=0)
+    }
 
     val picGet = new HttpGet("http://localhost:8080/LoginDemo/pic/1.jpg")
-    assert(poolingClient.doRequest(picGet,context).body.length!=0)
+    poolingClient.doRequest(picGet,context) match {
+      case r:TextResponse =>
+        println(r.mkHttpString)
+        assert(r.body.length!=0)
+      case r:BinaryResponse =>
+        println(r.mkHttpString())
+        assert(r.body.length!=0)
+    }
+
   }
 
 //  test("what will happen if queue empty and try to take"){

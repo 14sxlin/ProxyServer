@@ -1,7 +1,10 @@
+import java.io.{File, FileOutputStream}
 import java.net.SocketException
 
+import entity.response.TextResponse
 import mock.client.HttpClientMock
 import org.slf4j.LoggerFactory
+import utils.http.HexUtils
 
 /**
   * Created by linsixin on 2017/8/5.
@@ -30,7 +33,7 @@ object HttpClientRun extends App{
     doGetThread
   }
 
-  def doGetByProxy():Thread = {
+  def doGetByProxy(targetURI:String,onSuccess: (String)=>Unit):Thread = {
     @volatile var success = false
     val task = new Runnable {
       override def run() : Unit = {
@@ -38,10 +41,11 @@ object HttpClientRun extends App{
           try{
             val result = httpClient.doGetByProxyWithHttp(targetHost, 8080, proxy, proxyPort, targetURI)
             logger.info(s"receive data length = ${result.length}")
+            onSuccess(result)
             success = true
           }catch {
             case e:SocketException =>
-              logger.error("socket error")
+              logger.error(s"socket error, ${e.getMessage}")
               logger.info("retry 10 seconds later")
               Thread.sleep(10000)
           }
@@ -63,7 +67,7 @@ object HttpClientRun extends App{
             Thread.sleep(5000)
           }catch {
             case e:SocketException =>
-              logger.error("socket error")
+              logger.error(s"socket error ${e.getMessage}")
               logger.info("retry 10 seconds later")
               Thread.sleep(10000)
           }
@@ -74,9 +78,15 @@ object HttpClientRun extends App{
     new Thread(task)
   }
 
-  val thread = doGetByProxy()
-  thread.start()
-  thread.join()
+//  val t1 = doGetByProxy("/");t1.start()
+
+  val onSuccess = (result:String) =>{
+    println(result)
+  }
+
+  val t2 = doGetByProxy("/LoginDemo/pic/1.jpg",onSuccess);t2.start()
+//  t1.join()
+  t2.join()
 
 }
 

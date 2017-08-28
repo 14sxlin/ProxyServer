@@ -1,6 +1,6 @@
 package task
 
-import entity.response.Response
+import entity.response.TextResponse
 import org.apache.http.client.methods.HttpUriRequest
 import utils.http.HttpUtils
 
@@ -16,7 +16,7 @@ class OncePostTask(request: HttpUriRequest)
   override def begin(): Unit = {
     if (request == null)
       return
-    val postResult = Future[Response]{
+    val postResult = Future[TextResponse]{
       logger.info("request has been send")
       HttpUtils.execute(request)
     }

@@ -1,6 +1,6 @@
 package filter.response
 
-import entity.response.Response
+import entity.response.{BinaryResponse, Response, TextResponse}
 import org.apache.http.HttpHeaders
 
 /**
@@ -13,11 +13,20 @@ object ChuckFilter extends ResponseFilter {
     if(!response.headers.map(nameValue => nameValue._1 )
                 .contains(transferEncoding))
       return response
-    Response(
-      response.firstLine,
-      response.headers.filter(_._1 !=transferEncoding ),
-      response.body
-    )
+    response match {
+      case r:TextResponse =>
+        TextResponse(
+          r.firstLine,
+          r.headers.filter(_._1 !=transferEncoding ),
+          r.body
+        )
+      case r:BinaryResponse =>
+        BinaryResponse(
+          r.firstLine,
+          r.headers.filter(_._1 !=transferEncoding ),
+          r.body
+        )
+    }
 
   }
 }

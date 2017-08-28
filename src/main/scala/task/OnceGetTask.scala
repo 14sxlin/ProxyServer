@@ -1,6 +1,6 @@
 package task
 
-import entity.response.Response
+import entity.response.TextResponse
 import org.apache.http.client.methods.HttpUriRequest
 import utils.http.HttpUtils
 
@@ -18,13 +18,13 @@ class OnceGetTask(request: HttpUriRequest)
   override def begin(): Unit = {
     if (request == null)
       return
-    val doGetResult = Future[Response]{
+    val doGetResult = Future[TextResponse]{
       logger.info("request has been send")
       HttpUtils.execute(request)
     }
 
     doGetResult onSuccess {
-      case response : Response =>
+      case response : TextResponse =>
         onSuccess(response)
       case _ =>
         throw new Exception("unknown response")

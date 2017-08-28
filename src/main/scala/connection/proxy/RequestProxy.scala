@@ -3,7 +3,7 @@
 //import connection.ClientConnection
 //import constants.HttpRequestMethod
 //import entity.request.{Request, RequestFactory}
-//import entity.{RequestFactory, Response}
+//import entity.{RequestFactory, TextResponse}
 //import org.slf4j.{Logger, LoggerFactory}
 //import task.OnceTaskFactory
 //
@@ -48,7 +48,7 @@
 //    true
 //  }
 //
-//  private def response2Client(response: Response) = {
+//  private def response2Client(response: TextResponse) = {
 //    logger.info(s"response length : ${response.body.length}")
 //    val handle = DefaultHeaderChain.firstOfResponseHeaderHandlerChain
 //    val newHeader = handle.handle(response.headers)

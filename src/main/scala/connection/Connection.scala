@@ -2,9 +2,6 @@ package connection
 
 import java.io.{InputStream, OutputStream}
 
-import org.slf4j.{Logger, LoggerFactory}
-import utils.http.HexUtils
-
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 
@@ -16,8 +13,6 @@ import scala.collection.mutable.ArrayBuffer
   * the other side
   */
 trait Connection {
-
-  val logger : Logger = LoggerFactory.getLogger(getClass)
 
   protected var out: OutputStream = _
   protected var in: InputStream = _
@@ -46,7 +41,6 @@ trait Connection {
     def readUntilBufferNotFull():Unit = {
       val length = in.read(buffer)
       if(length == -1){
-        logger.info("read nothing ,socket close, get -1")
         return
       }
 
@@ -58,11 +52,6 @@ trait Connection {
     readUntilBufferNotFull()
     if(totalLen == 0)
       return None
-    logger.info(s"total read length = $totalLen ")
-//    logger.info(s"total read data(gbk) : \n${new String(total.toArray,"gbk")}\n")
-//    logger.info(s"total read data(utf-8): \n${new String(total.toArray,"utf-8")}\n" +
-//      s"----------------------------------------------\r\n" +
-//      s"bytes: \n${HexUtils.toHex(total.toArray)}")
     Some(total.toArray)
   }
 
@@ -82,14 +71,12 @@ trait Connection {
     out.flush()
   }
 
-  def writeTextData(data: String): Unit = {
+  def writeTextData(data: String, encoding:String = "utf-8"): Unit = {
     checkConnectionOpen()
-//    logger.info(s"write \n$data\nto end : length=${data.length}")
-    logger.info(s"write ${data.length} of data  to end ")
-    writeBinaryData(data.getBytes)
+    writeBinaryData(data.getBytes(encoding))
   }
 
-  private def checkConnectionOpen() = {
+  private def checkConnectionOpen(): Unit = {
     if(!connectionOpen)
       throw new IllegalStateException("connection not open")
   }

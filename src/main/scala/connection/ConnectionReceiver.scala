@@ -16,7 +16,6 @@ case class ConnectionReceiver(port: Int, connectionPool: ConnectionPool) {
     val serverSocket = new ServerSocket(port)
     val clientSocket = serverSocket.accept()
 
-    logger.info(s"connect ${clientSocket.getInetAddress}")
     val clientConnection = new ClientConnection(clientSocket)
 
     connectionPool.put(clientSocket.getInetAddress.toString, clientConnection)

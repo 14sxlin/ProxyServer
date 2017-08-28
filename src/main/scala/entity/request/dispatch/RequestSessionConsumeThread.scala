@@ -14,6 +14,8 @@ class RequestSessionConsumeThread(requestSession: RequestSession,
 
 
   override protected val name = s"request session @ ${requestSession.hash}"
+  override protected val resourceName = s"${requestSession.context}"
+
   private val logger = LoggerFactory.getLogger(getClass)
 
   @volatile private var isShutDown = false

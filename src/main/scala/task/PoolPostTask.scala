@@ -1,6 +1,6 @@
 //package task
 //
-//import entity.response.Response
+//import entity.response.TextResponse
 //import http.RequestProxy
 //import org.apache.http.client.methods.HttpUriRequest
 //import utils.http.HttpUtils
@@ -15,7 +15,7 @@
 //  override def begin(): Unit = {
 //    if (request == null)
 //      return
-//    val postResult = Future[Response]{
+//    val postResult = Future[TextResponse]{
 //      logger.info("session has been send")
 //      proxy.doRequest(request)
 //    }

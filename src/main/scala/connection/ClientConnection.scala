@@ -17,6 +17,8 @@ class ClientConnection(val socket: Socket) extends TimeBasingAutoCloseConnection
 
   override protected val name = s"Client-${socket.getInetAddress.toString}"
 
+  override protected val resourceName = s"Client Socket"
+
   override def openConnection(): Unit = {
     if(connectionOpen)
       return

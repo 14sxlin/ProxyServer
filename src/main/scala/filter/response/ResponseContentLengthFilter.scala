@@ -1,5 +1,5 @@
 package filter.response
-import entity.response.Response
+import entity.response.{BinaryResponse, Response, TextResponse}
 import org.apache.http.HttpHeaders
 
 /**
@@ -14,12 +14,22 @@ object ResponseContentLengthFilter extends ResponseFilter{
       .contains(contentLength))
       response
     else{
-      val newHeaders =  response.headers :+ (contentLength,s"${response.body.length}")
-      Response(
-        response.firstLine,
-        newHeaders,
-        response.body
-      )
+      response match {
+        case r:TextResponse =>
+          val newHeaders =  response.headers :+ (contentLength,s"${r.body.length}")
+          TextResponse(
+            r.firstLine,
+            newHeaders,
+            r.body
+          )
+        case r:BinaryResponse =>
+          val newHeaders =  response.headers :+ (contentLength,s"${r.body.length}")
+          BinaryResponse(
+            r.firstLine,
+            newHeaders,
+            r.body
+          )
+      }
     }
 
   }

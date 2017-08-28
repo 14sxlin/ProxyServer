@@ -30,10 +30,8 @@ object RequestFactory {
     }
 
     if(hasBodyPart(parts)){
-      logger.info("<has body/>")
       buildRequestWithBody(firstLine,parts)
     }else{
-      logger.info("<no body/>")
       buildRequestNoBody(firstLine,parts)
     }
   }

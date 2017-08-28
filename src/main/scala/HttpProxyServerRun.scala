@@ -83,8 +83,8 @@ object HttpProxyServerRun extends App{
 
           val task = OnceTaskFactory.createTask(httpUriRequest)
           task.onSuccess = (response) => {
-            client.writeTextData(
-              ChuckFilter.handle(response).mkHttpString
+            client.writeBinaryData(
+              ChuckFilter.handle(response).mkHttpBinary()
             )
             //        clientConnection.closeAllResource()
           }
