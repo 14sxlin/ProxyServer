@@ -14,6 +14,9 @@ import org.apache.http.util.EntityUtils
   */
 class ConnectionPoolingClient extends CloseWhenNotActive{
 
+
+  override protected val name = "connection pooling"
+
   private val cm = new PoolingHttpClientConnectionManager()
   cm.setMaxTotal(200)
   private val client = HttpClients

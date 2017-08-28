@@ -5,7 +5,7 @@
 //import entity.request.{Request, RequestFactory}
 //import entity.{RequestFactory, Response}
 //import org.slf4j.{Logger, LoggerFactory}
-//import task.TaskFactory
+//import task.OnceTaskFactory
 //
 ///**
 //  * Created by sparr on 2017/8/19.
@@ -50,8 +50,8 @@
 //
 //  private def response2Client(response: Response) = {
 //    logger.info(s"response length : ${response.body.length}")
-//    val handler = DefaultHeaderChain.firstOfResponseHeaderHandlerChain
-//    val newHeader = handler.handle(response.headers)
+//    val handle = DefaultHeaderChain.firstOfResponseHeaderHandlerChain
+//    val newHeader = handle.handle(response.headers)
 //    response.headers = newHeader
 //    writer.append(response.mkHttpString)
 //    writer.flush()
