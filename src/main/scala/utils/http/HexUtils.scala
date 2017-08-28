@@ -1,9 +1,9 @@
-package scritps
+package utils.http
 
 /**
   * Created by sparr on 2017/8/22.
   */
-object HexAnalyse{
+object HexUtils{
 
   def toHex(bytes:Array[Byte]) : String = {
     val buffer = new StringBuffer()
