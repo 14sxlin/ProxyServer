@@ -4,7 +4,7 @@ import mock.client.HttpClientMock
 import org.slf4j.LoggerFactory
 
 /**
-  * Created by sparr on 2017/8/5.
+  * Created by linsixin on 2017/8/5.
   */
 object HttpClientRun extends App{
   val logger = LoggerFactory.getLogger(getClass)
@@ -37,7 +37,7 @@ object HttpClientRun extends App{
         while(!success){
           try{
             val result = httpClient.doGetByProxyWithHttp(targetHost, 8080, proxy, proxyPort, targetURI)
-            logger.info(s"receive data = : $result")
+            logger.info(s"receive data length = ${result.length}")
             success = true
           }catch {
             case e:SocketException =>
@@ -59,7 +59,7 @@ object HttpClientRun extends App{
           try{
             val result = httpClient.doPostByProxyWithHttp(
               targetHost,targetPort,proxy,proxyPort,postUri,params)
-            logger.info(s"receive data = : $result")
+            logger.info(s"receive data length = ${result.length}")
             Thread.sleep(5000)
           }catch {
             case e:SocketException =>
