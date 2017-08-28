@@ -59,9 +59,7 @@ object HttpUtils {
       entity match {
         case null => Array.emptyByteArray
         case _ =>
-          val data = IOUtils.dataFromInputStream(entity.getContent)
-          assert(data.length != 0)
-          data
+          IOUtils.dataFromInputStream(entity.getContent)
       }
     )
 

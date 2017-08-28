@@ -1,10 +1,7 @@
-import java.io.{File, FileOutputStream}
 import java.net.SocketException
 
-import entity.response.TextResponse
 import mock.client.HttpClientMock
 import org.slf4j.LoggerFactory
-import utils.http.HexUtils
 
 /**
   * Created by linsixin on 2017/8/5.
@@ -81,7 +78,7 @@ object HttpClientRun extends App{
 //  val t1 = doGetByProxy("/");t1.start()
 
   val onSuccess = (result:String) =>{
-    println(result)
+//    println(result)
   }
 
   val t2 = doGetByProxy("/LoginDemo/pic/1.jpg",onSuccess);t2.start()

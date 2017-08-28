@@ -18,8 +18,7 @@ object IOUtils {
       val len = in.read(buffer)
       if(len == -1) return
       data ++= buffer.slice(0,len)
-//      if(len == buffer.length)
-        readIn()
+      readIn()
     }
     readIn()
     data.toArray
