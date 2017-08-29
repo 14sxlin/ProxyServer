@@ -2,7 +2,7 @@ package http
 
 import java.util.concurrent.TimeUnit
 
-import connection.CloseWhenNotActive
+import connection.control.CloseWhenNotActive
 import entity.response.{BinaryResponse, Response, TextResponse}
 import org.apache.commons.lang3.StringUtils
 import org.apache.http.HttpHeaders
@@ -18,6 +18,8 @@ import utils.http.IOUtils
   */
 class ConnectionPoolingClient extends CloseWhenNotActive{
 
+
+  override protected val idleThreshold = 5000L
 
   override protected val name = "connection pooling"
   override protected val resourceName = s"http client pool"

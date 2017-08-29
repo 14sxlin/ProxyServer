@@ -39,7 +39,8 @@ object HttpClientRun extends App{
             val result = httpClient.doGetByProxyWithHttp(targetHost, 8080, proxy, proxyPort, targetURI)
             logger.info(s"receive data length = ${result.length}")
             onSuccess(result)
-            success = true
+            Thread.sleep(5000)
+//            success = true
           }catch {
             case e:SocketException =>
               logger.error(s"socket error, ${e.getMessage}")

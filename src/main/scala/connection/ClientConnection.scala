@@ -2,7 +2,7 @@ package connection
 
 import java.net.Socket
 
-import org.slf4j.{Logger, LoggerFactory}
+import connection.control.ActiveControl
 
 
 /**
@@ -12,12 +12,10 @@ import org.slf4j.{Logger, LoggerFactory}
   * socket or sending data to client
   *
   */
-class ClientConnection(val socket: Socket) extends TimeBasingAutoCloseConnection {
+class ClientConnection(val socket: Socket) extends ActiveControl with Connection{
 
 
-  override protected val name = s"Client-${socket.getInetAddress.toString}"
-
-  override protected val resourceName = s"Client Socket"
+  override val idleThreshold : Long = ConnectionConstants.idleThreshold
 
   override def openConnection(): Unit = {
     if(connectionOpen)

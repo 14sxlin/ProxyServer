@@ -1,11 +1,12 @@
 import java.net.SocketException
 
 import connection._
+import connection.control.DefaultConnectionPool
 import entity.request._
 import entity.request.adapt.{GetRequestAdapter, PostRequestAdapter, RequestAdapter}
 import entity.request.wrapped.RequestWrapper
 import filter.response.ChuckFilter
-import filter.request.{RequestContentLengthFilter, ProxyHeaderFilter}
+import filter.request.{ProxyHeaderFilter, RequestContentLengthFilter}
 import org.slf4j.LoggerFactory
 import task.OnceTaskFactory
 import utils.http.HttpUtils
@@ -35,7 +36,7 @@ object HttpProxyServerRun extends App{
     val clientConnection = receiver.accept()
     logger.info(s"receive connection...$clientConnection")
     clientConnection.openConnection()
-    clientConnection.closeWhenNotActiveIn(10000L)
+//    clientConnection.closeWhenNotActiveIn(10000L)
     new Thread(new Runnable {
       override def run(): Unit =
         try{
@@ -115,8 +116,8 @@ object HttpProxyServerRun extends App{
 //      logger.info(s"get response:\n ${new String(response)}\n")
 //      client.writeBinaryData(response)
 
-      serverCon.closeWhenNotActiveIn(1000L)
-      client.closeWhenNotActiveIn(1000L)
+//      serverCon.closeWhenNotActiveIn(1000L)
+//      client.closeWhenNotActiveIn(1000L)
     }else{
       client.writeTextData(HttpUtils.unauthenicationInfo)
       client.closeAllResource()

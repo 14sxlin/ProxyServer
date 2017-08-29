@@ -99,7 +99,6 @@ case class Request(firstLine: String,
   def getHost : Option[String] = {
     getHeaderValue(HttpHeaders.HOST)
   }
-
 }
 
 object Request {

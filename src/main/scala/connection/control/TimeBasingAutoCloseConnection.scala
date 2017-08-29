@@ -1,4 +1,6 @@
-package connection
+package connection.control
+
+import connection.Connection
 
 /**
   * Created by linsixin on 2017/8/20.

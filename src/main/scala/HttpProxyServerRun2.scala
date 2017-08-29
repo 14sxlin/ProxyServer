@@ -1,6 +1,7 @@
 import java.net.SocketException
 
 import connection._
+import connection.control.{DefaultConnectionPool, IdleConnectionThread}
 import constants.LoggerMark
 import entity.request._
 import entity.request.adapt.{GetRequestAdapter, PostRequestAdapter, RequestAdapter}
@@ -24,6 +25,18 @@ object HttpProxyServerRun2 extends App {
   val port = 689
   val proxy = new RequestProxy(new ConnectionPoolingClient)
 
+  val clientConPool = new DefaultConnectionPool
+  val idleConnectionGCThread = new IdleConnectionThread(clientConPool)
+  idleConnectionGCThread.setDaemon(true)
+  idleConnectionGCThread.setName("ConnectionGC-Thread")
+  idleConnectionGCThread.start()
+
+  val requestConsumerPool = new DefaultConnectionPool
+  val idleConsumerGCThread = new IdleConnectionThread(requestConsumerPool)
+  idleConsumerGCThread.setDaemon(true)
+  idleConsumerGCThread.setName("ConsumerGC-Thread")
+  idleConsumerGCThread.start()
+
   val task = new Runnable {
     override def run() : Unit = {
       while(true){
@@ -34,8 +47,9 @@ object HttpProxyServerRun2 extends App {
   val t = new Thread(task)
   t.start()
 
+
   def begin(): Unit = {
-    val receiver = ConnectionReceiver(port, new DefaultConnectionPool)
+    val receiver = ConnectionReceiver(port,clientConPool)
     val clientConnection = receiver.accept()
 
     clientConnection.openConnection()
@@ -134,6 +148,7 @@ object HttpProxyServerRun2 extends App {
             proxy,
             onSuccess
           )
+          requestConsumerPool.put(hash,consumeThread)
           consumeThread.setName("Queue-consumer")
           consumeThread.start()
         case None =>
@@ -153,8 +168,8 @@ object HttpProxyServerRun2 extends App {
       serverCon.openConnection()
       val transfer = new DataTransfer(client,serverCon)
       transfer.communicate()
-      serverCon.closeWhenNotActiveIn(1000L)
-      client.closeWhenNotActiveIn(1000L)
+//      serverCon.closeWhenNotActiveIn(1000L)
+//      client.closeWhenNotActiveIn(1000L)
     }else{
       client.writeTextData(HttpUtils.unauthenicationInfo)
       client.closeAllResource()

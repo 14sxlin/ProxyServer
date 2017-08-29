@@ -1,4 +1,4 @@
-package connection
+package connection.control
 
 import constants.LoggerMark
 import org.slf4j.LoggerFactory
@@ -14,20 +14,12 @@ import scala.util.control.Breaks
   * timeToClose() method to declare what should be close when
   * not active
   */
-trait CloseWhenNotActive {
-
-  private val logger = LoggerFactory.getLogger(getClass)
-
-  private var last : Long = System.currentTimeMillis()
+trait CloseWhenNotActive extends ActiveControl {
 
   protected val name:String
   protected val resourceName : String
 
-  def timeToClose():Unit
-
-  def updateActiveTime():Unit = {
-    last = System.currentTimeMillis()
-  }
+  private val logger = LoggerFactory.getLogger(getClass)
 
   import Breaks._
   def closeWhenNotActiveIn(afterSecondClose:Long) : Unit = {

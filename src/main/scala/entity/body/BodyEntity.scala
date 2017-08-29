@@ -1,7 +1,7 @@
 package entity.body
 
 /**
-  * Created by sparr on 2017/8/19.
+  * Created by linsixin on 2017/8/19.
   */
 sealed trait BodyEntity
 
