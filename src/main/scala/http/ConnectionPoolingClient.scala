@@ -2,7 +2,7 @@ package http
 
 import java.util.concurrent.TimeUnit
 
-import connection.control.CloseWhenNotActive
+import connection.ConnectionConstants
 import entity.response.{BinaryResponse, Response, TextResponse}
 import org.apache.commons.lang3.StringUtils
 import org.apache.http.HttpHeaders
@@ -16,16 +16,11 @@ import utils.http.IOUtils
 /**
   * Created by linsixin on 2017/8/25.
   */
-class ConnectionPoolingClient extends CloseWhenNotActive{
+class ConnectionPoolingClient {
 
-
-  override protected val idleThreshold = 5000L
-
-  override protected val name = "connection pooling"
-  override protected val resourceName = s"http client pool"
 
   private val cm = new PoolingHttpClientConnectionManager()
-  cm.setMaxTotal(200)
+  cm.setMaxTotal(ConnectionConstants.maxConnection)
   private val client = HttpClients
     .custom().setConnectionManager(cm)
     .build()
@@ -33,8 +28,7 @@ class ConnectionPoolingClient extends CloseWhenNotActive{
   def doRequest(request:HttpUriRequest,
                 context: HttpClientContext,
                 encoding:String = "utf8") : Response = {
-    updateActiveTime()
-    cm.closeIdleConnections(15,TimeUnit.SECONDS)
+    cm.closeIdleConnections(3,TimeUnit.SECONDS)
     val httpResponse = client.execute(request,context)
     val entity = httpResponse.getEntity
     val headers = httpResponse.getAllHeaders.map(h => (h.getName, h.getValue))
@@ -67,10 +61,6 @@ class ConnectionPoolingClient extends CloseWhenNotActive{
 
   private def contentTypeHeader (nameValue:(String,String)) :Boolean= {
     nameValue._1 == HttpHeaders.CONTENT_TYPE
-  }
-
-  override def timeToClose(): Unit = {
-    close()
   }
 
   def close() : Unit = {

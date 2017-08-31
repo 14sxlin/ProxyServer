@@ -9,4 +9,6 @@ object ConnectionConstants {
     * will be regarded as idle
     */
   val idleThreshold = 2000L
+
+  val maxConnection = 200
 }

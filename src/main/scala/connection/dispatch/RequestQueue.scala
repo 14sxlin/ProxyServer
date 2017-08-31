@@ -1,4 +1,4 @@
-package entity.request.dispatch
+package connection.dispatch
 
 import java.util.concurrent.ArrayBlockingQueue
 

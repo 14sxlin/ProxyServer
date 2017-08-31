@@ -1,12 +1,11 @@
 import java.net.SocketException
 
 import connection._
-import connection.control.DefaultConnectionPool
 import entity.request._
 import entity.request.adapt.{GetRequestAdapter, PostRequestAdapter, RequestAdapter}
 import entity.request.wrapped.RequestWrapper
-import filter.response.ChuckFilter
 import filter.request.{ProxyHeaderFilter, RequestContentLengthFilter}
+import filter.response.ChuckFilter
 import org.slf4j.LoggerFactory
 import task.OnceTaskFactory
 import utils.http.HttpUtils
@@ -32,7 +31,7 @@ object HttpProxyServerRun extends App{
   t.start()
 
   def begin(): Unit = {
-    val receiver = ConnectionReceiver(port, new DefaultConnectionPool)
+    val receiver = ConnectionReceiver(port)
     val clientConnection = receiver.accept()
     logger.info(s"receive connection...$clientConnection")
     clientConnection.openConnection()

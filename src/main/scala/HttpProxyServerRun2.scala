@@ -1,16 +1,16 @@
 import java.net.SocketException
+import java.util.concurrent.ArrayBlockingQueue
 
 import connection._
-import connection.control.{DefaultConnectionPool, IdleConnectionThread}
+import connection.control.{ClientServicePool, IdleServiceGCThread}
+import connection.dispatch.{RequestConsumeThread, RequestDispatcher}
 import constants.LoggerMark
 import entity.request._
 import entity.request.adapt.{GetRequestAdapter, PostRequestAdapter, RequestAdapter}
-import entity.request.dispatch.{RequestDispatcher, RequestSessionConsumeThread}
 import entity.request.wrapped.{MessRequest, RequestWrapper, WrappedRequest}
-import entity.response.Response
 import filter.request.{ProxyHeaderFilter, RequestContentLengthFilter}
-import filter.response.{ChuckFilter, ResponseContentLengthFilter}
 import http.{ConnectionPoolingClient, RequestProxy}
+import org.apache.http.client.protocol.HttpClientContext
 import org.slf4j.LoggerFactory
 import utils.http.{HashUtils, HttpUtils}
 
@@ -23,19 +23,21 @@ object HttpProxyServerRun2 extends App {
 
   val logger = LoggerFactory.getLogger(getClass)
   val port = 689
-  val proxy = new RequestProxy(new ConnectionPoolingClient)
 
-  val clientConPool = new DefaultConnectionPool
-  val idleConnectionGCThread = new IdleConnectionThread(clientConPool)
-  idleConnectionGCThread.setDaemon(true)
-  idleConnectionGCThread.setName("ConnectionGC-Thread")
-  idleConnectionGCThread.start()
+  val connectionPoolingClient = new ConnectionPoolingClient
+  val requestProxy = new RequestProxy(connectionPoolingClient)
+  val requestQueue = new ArrayBlockingQueue[RequestUnit](ConnectionConstants.maxConnection)
+  val requestConsumeThread = new RequestConsumeThread(requestQueue,requestProxy)
+  requestConsumeThread.setName("Request-Consume-Thread")
+  requestConsumeThread.start()
 
-  val requestConsumerPool = new DefaultConnectionPool
-  val idleConsumerGCThread = new IdleConnectionThread(requestConsumerPool)
-  idleConsumerGCThread.setDaemon(true)
-  idleConsumerGCThread.setName("ConsumerGC-Thread")
-  idleConsumerGCThread.start()
+
+  val clientPool = new ClientServicePool
+  val requestDispatcher = new RequestDispatcher(clientPool)
+
+//  val clientServiceGCThread = new IdleServiceGCThread[ClientServiceUnit](clientPool)
+//  clientServiceGCThread.setName("ClientService-GC")
+//  clientServiceGCThread.start()
 
   val task = new Runnable {
     override def run() : Unit = {
@@ -45,15 +47,17 @@ object HttpProxyServerRun2 extends App {
     }
   }
   val t = new Thread(task)
+  t.setName("Socket-Accept-Thread")
   t.start()
 
 
   def begin(): Unit = {
-    val receiver = ConnectionReceiver(port,clientConPool)
+    val receiver = ConnectionReceiver(port)
     val clientConnection = receiver.accept()
 
     clientConnection.openConnection()
-    new Thread(new Runnable {
+
+    val processThread = new Thread(new Runnable {
       override def run(): Unit =
         try{
           startNewThreadToProcess(clientConnection)
@@ -61,7 +65,9 @@ object HttpProxyServerRun2 extends App {
           case e: SocketException =>
             logger.warn(s"socket has closed, ${e.getMessage}")
         }
-    }).start()
+    })
+    processThread.setName("Process-Thread")
+    processThread.start()
   }
 
   private def startNewThreadToProcess(client: ClientConnection):Unit = {
@@ -75,32 +81,23 @@ object HttpProxyServerRun2 extends App {
         val uri = wrappedRequest.uri
         val host = uri.split(":").head.trim
         val port = uri.split(":").last.trim.toInt
-        val establishInfo = HttpUtils.establishConnectInfo
-        client.writeTextData(establishInfo)
+        //don't process 433 now
+        //process it later
+//        val establishInfo = HttpUtils.establishConnectInfo
+//        client.writeTextData(establishInfo)
+        authenticate = false
         responseAndAskForNewData(client,host,port)
       case _ => //post get
         val hash = HashUtils.getHash(client,wrappedRequest)
-
-        val onSuccess = (response: Response) => {
-          val data = ResponseContentLengthFilter.handle(
-            ChuckFilter.handle(response))
-            .mkHttpBinary()
-          logger.info(s"${LoggerMark.down} " +
-            s"${response.firstLine}  " +
-            s"${data.length} to client")
-          client.writeBinaryData(data)
-        }
-        processGetOrPostRequest(hash,wrappedRequest,onSuccess)
-
+        processGetOrPostRequest(hash,wrappedRequest,client)
         @tailrec
         def readRemainingRequest() : Unit = {
           val newWrappedRequest = readAndParseToWrappedRequest(client)
           if(newWrappedRequest != WrappedRequest.Empty){
-            processGetOrPostRequest(hash,newWrappedRequest,onSuccess)
+            processGetOrPostRequest(hash,newWrappedRequest,client)
             readRemainingRequest()
           }
         }
-
         readRemainingRequest()
     }
 
@@ -125,8 +122,8 @@ object HttpProxyServerRun2 extends App {
   }
 
   private def processGetOrPostRequest(hash:String,
-                                       wrappedRequest: WrappedRequest,
-                                       onSuccess: Response => Unit ):Unit = {
+                                      wrappedRequest: WrappedRequest,
+                                      clientConnection: ClientConnection):Unit = {
     assert(wrappedRequest != WrappedRequest.Empty)
     var adapter: RequestAdapter = null
     val method = wrappedRequest.firstLineInfo._1
@@ -137,31 +134,21 @@ object HttpProxyServerRun2 extends App {
         adapter = PostRequestAdapter
     } // great can assign object to variable
     val httpUriRequest = adapter.adapt(wrappedRequest)
-    val alreadyHasSession =
-          RequestDispatcher.dispatch(hash,httpUriRequest)
-    if(!alreadyHasSession){ //if it's a new session should start new thread
-      logger.info(s"${LoggerMark.resource} start new queue consumer: $hash")
-      RequestDispatcher.getRequestSession(hash) match{
-        case Some(requestSession) =>
-          val consumeThread = new RequestSessionConsumeThread(
-            requestSession,
-            proxy,
-            onSuccess
-          )
-          requestConsumerPool.put(hash,consumeThread)
-          consumeThread.setName("Queue-consumer")
-          consumeThread.start()
-        case None =>
-          throw new Exception("no request session !")
-      }
+    if(requestDispatcher.containsKey(hash)){
+      logger.info(s"Already have a ClientServiceUnit $hash")
+      val requestUnit = requestDispatcher.buildRequestUnit(hash,httpUriRequest)
+      requestQueue.put(requestUnit)
     }else{
-      logger.info(s"${LoggerMark.resource} add new request to same context")
+      logger.info(s"Create a new ClientServiceUnit $hash")
+      val serviceUnit = new ClientServiceUnit(clientConnection,HttpClientContext.create())
+      requestDispatcher.addNewServiceUnit(hash,serviceUnit)
+      val requestUnit = requestDispatcher.buildRequestUnit(hash,httpUriRequest)
+      requestQueue.put(requestUnit)
     }
-
   }
 
 
-  val authenticate = true
+  var authenticate = true
   def responseAndAskForNewData(client: ClientConnection,host:String,port:Int): Unit = {
     if(authenticate) {
       val serverCon = new ServerConnection(host,port)

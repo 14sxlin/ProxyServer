@@ -1,6 +1,6 @@
 package filter.request
 
-import entity.request.{Request, TotalEncryptRequest}
+import entity.request.Request
 import org.apache.http.HttpHeaders
 
 /**

@@ -34,7 +34,7 @@ class ClientConnection(val socket: Socket) extends ActiveControl with Connection
     closeSocket()
   }
 
-  override def timeToClose(): Unit = {
+  override def closeWhenNotActive(): Unit = {
     closeAllResource()
   }
 }

@@ -10,9 +10,12 @@ import entity.request.Request
 object HashUtils {
 
   def getHash(con: ClientConnection, request: Request) : String = {
+    if(con == null || con.socket == null || request == null)
+      throw new IllegalArgumentException("con and request should not be null")
     val addr = con.socket.getInetAddress
-    if( con!=null && addr!=null && request!=null){
-      s"${addr.toString}-" +
+    val port = con.socket.getPort
+    if( addr!=null){
+      s"${addr.toString}:$port-" +
         s"${request.getHost.getOrElse("unknown-host")}"
     }
     else throw new IllegalArgumentException("con and request should not be null")

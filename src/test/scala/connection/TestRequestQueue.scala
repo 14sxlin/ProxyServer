@@ -1,7 +1,7 @@
 package connection
 
 import entity.request.Request
-import entity.request.dispatch.RequestQueue
+import connection.dispatch.RequestQueue
 import org.apache.http.client.methods.HttpGet
 import org.scalatest.FunSuite
 

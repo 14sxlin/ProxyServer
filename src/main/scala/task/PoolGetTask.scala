@@ -1,6 +1,6 @@
 //package task
 //
-//import entity.request.dispatch.RequestSession
+//import connection.dispatch.RequestSession
 //import entity.response.TextResponse
 //import http.RequestProxy
 //import org.apache.http.client.methods.HttpUriRequest

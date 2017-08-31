@@ -37,7 +37,7 @@ case class ServerConnection(socket: Socket) extends ActiveControl with Connectio
     closeSocket()
   }
 
-  override def timeToClose(): Unit = {
+  override def closeWhenNotActive(): Unit = {
     closeAllResource()
   }
 }

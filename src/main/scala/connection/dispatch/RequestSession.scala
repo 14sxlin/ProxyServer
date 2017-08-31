@@ -1,4 +1,4 @@
-package entity.request.dispatch
+package connection.dispatch
 
 import org.apache.http.client.protocol.HttpClientContext
 

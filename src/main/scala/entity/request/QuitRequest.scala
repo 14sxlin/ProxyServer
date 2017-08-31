@@ -1,4 +1,4 @@
-package entity.request.dispatch
+package entity.request
 
 import org.apache.http.client.methods.HttpGet
 

@@ -11,7 +11,7 @@ import scala.util.control.Breaks
   * to check whether connection it's active. Implementation
   * of this trait should use updateActiveTime() method
   * to notify that it's active. Also it needs to implement
-  * timeToClose() method to declare what should be close when
+  * closeWhenNotActive() method to declare what should be close when
   * not active
   */
 trait CloseWhenNotActive extends ActiveControl {
@@ -34,7 +34,7 @@ trait CloseWhenNotActive extends ActiveControl {
           }
         }
         logger.info(s"${LoggerMark.resource} $name : $resourceName")
-        timeToClose()
+        closeWhenNotActive()
       }
     }
     val monitor = new Thread(monitorRun)
