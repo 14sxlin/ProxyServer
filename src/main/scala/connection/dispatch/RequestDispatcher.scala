@@ -37,6 +37,7 @@ class RequestDispatcher(pool:ClientServicePool) {
         throw new IllegalArgumentException(s"There must be a ClientServiceUnit whit key $key")
       case Some(serviceUnit) =>
         RequestUnit(
+          key,
           request,
           serviceUnit.context,
           ClientServiceUnit.writeResponse(serviceUnit.clientConnection)

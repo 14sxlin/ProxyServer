@@ -11,7 +11,8 @@ object ConnectionCloseFilter extends ResponseFilter{
     if(response == null || response.headers == null){
       throw new IllegalArgumentException("response should never be null")
     }
-    if(response.headers.contains((HttpHeaders.CONNECTION,"close"))){
+    if(response.headers.exists(nv =>
+        nv._1 ==HttpHeaders.CONNECTION && nv._2.toLowerCase =="close")){
       response.connectionCloseFlag = true
       response
     }else response

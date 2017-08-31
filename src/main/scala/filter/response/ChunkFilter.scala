@@ -8,10 +8,9 @@ import org.apache.http.HttpHeaders
   */
 object ChunkFilter extends ResponseFilter {
 
-  val transferEncoding = HttpHeaders.TRANSFER_ENCODING
+  val transferEncoding : String = HttpHeaders.TRANSFER_ENCODING
   override def handle(response: Response): Response = {
-    if(!response.headers.map(nameValue => nameValue._1 )
-                .contains(transferEncoding))
+    if(!response.headers.exists(nameValue => nameValue._1 == transferEncoding ))
       return response
     response match {
       case r:TextResponse =>

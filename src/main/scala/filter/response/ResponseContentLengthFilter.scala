@@ -10,8 +10,7 @@ object ResponseContentLengthFilter extends ResponseFilter{
 
   private val contentLength = HttpHeaders.CONTENT_LENGTH
   override def handle(response: Response): Response = {
-    if(response.headers.map(nameValue => nameValue._1 )
-      .contains(contentLength))
+    if(response.headers.exists(nameValue => nameValue._1 == contentLength))
       response
     else{
       response match {

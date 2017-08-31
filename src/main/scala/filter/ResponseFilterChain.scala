@@ -17,7 +17,7 @@ object ResponseFilterChain {
   def handle(response:Response):Response = {
     var newResponse = response
     responseFilters.foreach{ filter =>
-      newResponse = filter.handle(response)
+      newResponse = filter.handle(newResponse)
     }
     newResponse
   }
