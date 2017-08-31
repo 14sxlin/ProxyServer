@@ -2,7 +2,7 @@ import java.net.SocketException
 import java.util.concurrent.ArrayBlockingQueue
 
 import connection._
-import connection.control.ClientServicePool
+import connection.control.{ClientServicePool, IdleServiceGCThread}
 import connection.dispatch.{RequestConsumeThread, RequestDispatcher}
 import constants.LoggerMark
 import entity.request._
@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory
 import utils.http.{HashUtils, HttpUtils}
 
 import scala.annotation.tailrec
+import scala.concurrent.forkjoin.ForkJoinPool
 
 /**
   * Created by linsixin on 2017/8/25.
@@ -27,17 +28,26 @@ object HttpProxyServerRun2 extends App {
   val connectionPoolingClient = new ConnectionPoolingClient
   val requestProxy = new RequestProxy(connectionPoolingClient)
   val requestQueue = new ArrayBlockingQueue[RequestUnit](ConnectionConstants.maxConnection)
-  val requestConsumeThread = new RequestConsumeThread(requestQueue,requestProxy)
-  requestConsumeThread.setName("Request-Consume-Thread")
-  requestConsumeThread.start()
-
 
   val clientPool = new ClientServicePool
   val requestDispatcher = new RequestDispatcher(clientPool)
 
-//  val clientServiceGCThread = new IdleServiceGCThread[ClientServiceUnit](clientPool)
-//  clientServiceGCThread.setName("ClientService-GC")
-//  clientServiceGCThread.start()
+  val requestConsumeThread1 = new RequestConsumeThread(clientPool,requestQueue,requestProxy)
+  requestConsumeThread1.setName("Request-Consume-Thread1")
+  requestConsumeThread1.start()
+  val requestConsumeThread2 = new RequestConsumeThread(clientPool,requestQueue,requestProxy)
+  requestConsumeThread2.setName("Request-Consume-Thread2")
+  requestConsumeThread2.start()
+  val requestConsumeThread3 = new RequestConsumeThread(clientPool,requestQueue,requestProxy)
+  requestConsumeThread3.setName("Request-Consume-Thread3")
+  requestConsumeThread3.start()
+
+
+
+
+  val clientServiceGCThread = new IdleServiceGCThread[ClientServiceUnit](clientPool)
+  clientServiceGCThread.setName("ClientService-GC")
+  clientServiceGCThread.start()
 
   val task = new Runnable {
     override def run() : Unit = {
@@ -50,6 +60,7 @@ object HttpProxyServerRun2 extends App {
   t.setName("Socket-Accept-Thread")
   t.start()
 
+  val executor = new ForkJoinPool(50)
 
   def begin(): Unit = {
     val receiver = ConnectionReceiver(port)
@@ -57,7 +68,7 @@ object HttpProxyServerRun2 extends App {
 
     clientConnection.openConnection()
 
-    val processThread = new Thread(new Runnable {
+    val processRun = new Runnable {
       override def run(): Unit =
         try{
           startNewThreadToProcess(clientConnection)
@@ -65,10 +76,14 @@ object HttpProxyServerRun2 extends App {
           case e: SocketException =>
             logger.warn(s"socket has closed, ${e.getMessage}")
         }
-    })
-    processThread.setName(s"Process-Thread-" +
-      s"${clientConnection.socket.getRemoteSocketAddress.toString}")
-    processThread.start()
+    }
+    executor.execute(processRun)
+
+
+//    val processThread = new Thread(processRun)
+//    processThread.setName(s"Process-Thread-" +
+//      s"${clientConnection.socket.getRemoteSocketAddress.toString}")
+//    processThread.start()
   }
 
   private def startNewThreadToProcess(client: ClientConnection):Unit = {
@@ -133,14 +148,16 @@ object HttpProxyServerRun2 extends App {
     } // great can assign object to variable
     val httpUriRequest = adapter.adapt(wrappedRequest)
     if(requestDispatcher.containsKey(hash)){
-      logger.info(s"Already have a ClientServiceUnit $hash")
+      logger.info(s"${LoggerMark.resource} Already have a ClientServiceUnit $hash, rest ${requestQueue.size()}")
       val requestUnit = requestDispatcher.buildRequestUnit(hash,httpUriRequest)
+      logger.info(s"${LoggerMark.process} put new request")
       requestQueue.put(requestUnit)
     }else{
-      logger.info(s"Create a new ClientServiceUnit $hash")
+      logger.info(s"${LoggerMark.resource} Create a new ClientServiceUnit $hash, rest ${requestQueue.size()}")
       val serviceUnit = new ClientServiceUnit(clientConnection,HttpClientContext.create())
       requestDispatcher.addNewServiceUnit(hash,serviceUnit)
       val requestUnit = requestDispatcher.buildRequestUnit(hash,httpUriRequest)
+      logger.info(s"${LoggerMark.process} put new request")
       requestQueue.put(requestUnit)
     }
   }

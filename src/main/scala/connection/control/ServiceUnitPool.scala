@@ -21,6 +21,13 @@ trait ServiceUnitPool[T <: ServiceUnit] {
     }
   }
 
+  def closeAndRemove(key:String):Unit = {
+    if(map.containsKey(key)){
+      map.get(key).closeWhenNotActive()
+      remove(key)
+    }
+  }
+
   def containsKey(key:String) : Boolean = {
     map.containsKey(key)
   }

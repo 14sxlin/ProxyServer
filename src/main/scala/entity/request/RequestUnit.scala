@@ -7,6 +7,7 @@ import org.apache.http.client.protocol.HttpClientContext
 /**
   * Created by linsixin on 2017/8/30.
   */
-case class RequestUnit(request:HttpUriRequest,
+case class RequestUnit(key:String,
+                       request:HttpUriRequest,
                        context:HttpClientContext,
                        onSuccess:Response => Unit)

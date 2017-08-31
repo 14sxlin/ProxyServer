@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory
   */
 case class ClientServiceUnit(clientConnection: ClientConnection,
                              context:HttpClientContext) extends ServiceUnit{
-  override protected val idleThreshold: Long = ConnectionConstants.idleThreshold
+  override protected val idleThreshold: Long = ConnectionConstants.idleThreshold + 8000L
 
   override def closeWhenNotActive(): Unit = {
     clientConnection.closeAllResource()
@@ -27,8 +27,10 @@ object ClientServiceUnit{
     response =>
       val data = responseFilterChain.handle(response)
         .mkHttpBinary()
+      val content = response.mkHttpString()
+      val minLen = Math.min(content.length,1000)
       logger.info(s"${LoggerMark.down} \n" +
-        s"${response.mkHttpString()}\n" +
+        s"${content.substring(0,minLen)}\n" +
         s"${data.length} to client")
       client.writeBinaryData(data)
   }

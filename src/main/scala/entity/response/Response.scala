@@ -4,6 +4,7 @@ package entity.response
   * Created by linsixin on 2017/8/28.
   */
 trait Response {
+  var connectionCloseFlag:Boolean = false
   val firstLine:String
   val headers:Array[(String,String)]
   val body:AnyRef

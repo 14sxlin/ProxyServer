@@ -11,6 +11,7 @@ import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.impl.client.HttpClients
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager
 import org.apache.http.util.EntityUtils
+import org.slf4j.LoggerFactory
 import utils.http.IOUtils
 
 /**
@@ -18,6 +19,7 @@ import utils.http.IOUtils
   */
 class ConnectionPoolingClient {
 
+  private val logger = LoggerFactory.getLogger(getClass)
 
   private val cm = new PoolingHttpClientConnectionManager()
   cm.setMaxTotal(ConnectionConstants.maxConnection)
@@ -28,7 +30,6 @@ class ConnectionPoolingClient {
   def doRequest(request:HttpUriRequest,
                 context: HttpClientContext,
                 encoding:String = "utf8") : Response = {
-    cm.closeIdleConnections(3,TimeUnit.SECONDS)
     val httpResponse = client.execute(request,context)
     val entity = httpResponse.getEntity
     val headers = httpResponse.getAllHeaders.map(h => (h.getName, h.getValue))
@@ -65,6 +66,10 @@ class ConnectionPoolingClient {
 
   def close() : Unit = {
     client.close()
+  }
+
+  def closeIdleConnection(time:Int):Unit = {
+    cm.closeIdleConnections(time,TimeUnit.SECONDS)
   }
 
 }
