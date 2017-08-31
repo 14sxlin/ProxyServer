@@ -9,7 +9,7 @@ import org.apache.http.HttpHeaders
   * and when there is already one, it throws exception.
   * Therefore need to remove.
   */
-object RequestContentLengthFilter extends HeaderFilter {
+object RequestContentLengthFilter extends RequestFilter {
 
   override protected def format(request: Request): Request = {
     Request(

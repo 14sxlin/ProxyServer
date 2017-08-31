@@ -2,7 +2,7 @@ package connection
 
 import constants.LoggerMark
 import entity.response.Response
-import filter.response.{ChuckFilter, ResponseContentLengthFilter}
+import filter.ResponseFilterChain
 import org.apache.http.client.protocol.HttpClientContext
 import org.slf4j.LoggerFactory
 
@@ -21,13 +21,14 @@ case class ClientServiceUnit(clientConnection: ClientConnection,
 object ClientServiceUnit{
   private val logger = LoggerFactory.getLogger(getClass)
 
-  def writeResponse(client:ClientConnection) : Response => Unit = {
+  def writeResponse(client:ClientConnection,
+                    responseFilterChain: ResponseFilterChain.type
+                      = ResponseFilterChain ) : Response => Unit = {
     response =>
-      val data = ResponseContentLengthFilter.handle(
-        ChuckFilter.handle(response))
+      val data = responseFilterChain.handle(response)
         .mkHttpBinary()
-      logger.info(s"${LoggerMark.down} " +
-        s"${response.firstLine}  " +
+      logger.info(s"${LoggerMark.down} \n" +
+        s"${response.mkHttpString()}\n" +
         s"${data.length} to client")
       client.writeBinaryData(data)
   }

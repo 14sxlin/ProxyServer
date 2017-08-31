@@ -16,7 +16,7 @@ case class BinaryResponse(firstLine:String,
       .getBytes(encoding) ++ body
   }
 
-  def mkHttpString(encoding:String = "utf-8") = {
+  override def mkHttpString(encoding:String = "utf-8") = {
     firstLine + "\r\n" +
       headers.map(EntityUtils.header2String).mkString("\r\n") +
       "\r\n"*2 +

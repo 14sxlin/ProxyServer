@@ -11,7 +11,7 @@ class TestTask extends FunSuite {
   test("get task") {
     val httpGet = new HttpGet("http://localhost:9000")
     val task = new OnceGetTask(httpGet)
-    task.onSuccess = res => println(res.mkHttpString)
+    task.onSuccess = res => println(res.mkHttpString())
     task.begin()
 
 

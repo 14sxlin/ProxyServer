@@ -5,7 +5,7 @@ import entity.request._
 import entity.request.adapt.{GetRequestAdapter, PostRequestAdapter, RequestAdapter}
 import entity.request.wrapped.RequestWrapper
 import filter.request.{ProxyHeaderFilter, RequestContentLengthFilter}
-import filter.response.ChuckFilter
+import filter.response.ChunkFilter
 import org.slf4j.LoggerFactory
 import task.OnceTaskFactory
 import utils.http.HttpUtils
@@ -84,7 +84,7 @@ object HttpProxyServerRun extends App{
           val task = OnceTaskFactory.createTask(httpUriRequest)
           task.onSuccess = (response) => {
             client.writeBinaryData(
-              ChuckFilter.handle(response).mkHttpBinary()
+              ChunkFilter.handle(response).mkHttpBinary()
             )
             //        clientConnection.closeAllResource()
           }

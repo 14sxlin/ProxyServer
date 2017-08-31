@@ -11,7 +11,7 @@ case class TextResponse(firstLine:String,
 
 
   override def mkHttpBinary(encoding: String = "utf-8"): Array[Byte] = {
-    mkHttpString.getBytes(encoding)
+    mkHttpString().getBytes(encoding)
   }
 
 
@@ -20,7 +20,7 @@ case class TextResponse(firstLine:String,
     *
     * @return
     */
-  def mkHttpString: String = {
+  override def mkHttpString(encoding:String = "utf-8"): String = {
     val str = new StringBuilder
     str.append(s"$firstLine\r\n")
       .append(headers.map(header2String).mkString("\r\n"))

@@ -4,9 +4,9 @@ import entity.request.{Request, TotalEncryptRequest}
 import org.apache.http.HttpHeaders
 
 /**
-  * Created by sparr on 2017/8/11.
+  * Created by linsixin on 2017/8/11.
   */
-trait HeaderFilter {
+trait RequestFilter {
 
   def handle(request: Request): Request = {
     request match {
@@ -19,6 +19,11 @@ trait HeaderFilter {
     }
   }
 
+  /**
+    * @param request request which is not null or empty request
+    *                or TotalEncryptRequest
+    * @return new request after processing
+    */
   protected def format(request: Request):Request
 
 

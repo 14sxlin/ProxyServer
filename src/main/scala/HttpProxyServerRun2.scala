@@ -2,13 +2,13 @@ import java.net.SocketException
 import java.util.concurrent.ArrayBlockingQueue
 
 import connection._
-import connection.control.{ClientServicePool, IdleServiceGCThread}
+import connection.control.ClientServicePool
 import connection.dispatch.{RequestConsumeThread, RequestDispatcher}
 import constants.LoggerMark
 import entity.request._
 import entity.request.adapt.{GetRequestAdapter, PostRequestAdapter, RequestAdapter}
 import entity.request.wrapped.{MessRequest, RequestWrapper, WrappedRequest}
-import filter.request.{ProxyHeaderFilter, RequestContentLengthFilter}
+import filter.RequestFilterChain
 import http.{ConnectionPoolingClient, RequestProxy}
 import org.apache.http.client.protocol.HttpClientContext
 import org.slf4j.LoggerFactory
@@ -66,7 +66,8 @@ object HttpProxyServerRun2 extends App {
             logger.warn(s"socket has closed, ${e.getMessage}")
         }
     })
-    processThread.setName("Process-Thread")
+    processThread.setName(s"Process-Thread-" +
+      s"${clientConnection.socket.getRemoteSocketAddress.toString}")
     processThread.start()
   }
 
@@ -107,11 +108,8 @@ object HttpProxyServerRun2 extends App {
     client.readTextData() match {
       case Some(rawRequest) =>
         logger.info(s"${LoggerMark.up} raw \n" + rawRequest)
-        val request =
-          RequestContentLengthFilter.handle(
-            ProxyHeaderFilter.handle(
-              RequestFactory.buildRequest(rawRequest)
-            )
+        val request = RequestFilterChain.handle(
+            RequestFactory.buildRequest(rawRequest)
           )
         RequestWrapper.wrap(request)
       case None =>

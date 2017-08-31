@@ -8,4 +8,5 @@ trait Response {
   val headers:Array[(String,String)]
   val body:AnyRef
   def mkHttpBinary(encoding:String = "utf-8"):Array[Byte]
+  def mkHttpString(encoding:String = "utf-8"):String
 }

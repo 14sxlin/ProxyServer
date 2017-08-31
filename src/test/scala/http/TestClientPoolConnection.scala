@@ -18,7 +18,7 @@ class TestClientPoolConnection extends FunSuite{
     val poolingClient = new ConnectionPoolingClient
     poolingClient.doRequest(httpUri,context) match {
       case r:TextResponse =>
-        println(r.mkHttpString)
+        println(r.mkHttpString())
         assert(r.body.length!=0)
       case r:BinaryResponse =>
         println(r.mkHttpString())
@@ -28,7 +28,7 @@ class TestClientPoolConnection extends FunSuite{
     val picGet = new HttpGet("http://localhost:8080/LoginDemo/pic/1.jpg")
     poolingClient.doRequest(picGet,context) match {
       case r:TextResponse =>
-        println(r.mkHttpString)
+        println(r.mkHttpString())
         assert(r.body.length!=0)
       case r:BinaryResponse =>
         println(r.mkHttpString())

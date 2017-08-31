@@ -9,7 +9,7 @@ import org.apache.http.HttpHeaders
   * pass any thing about connection alive, so this handle
   * helps to get rid of related headers from request or response
   */
-object ProxyHeaderFilter extends HeaderFilter {
+object ProxyHeaderFilter extends RequestFilter {
 
   override protected def format(request: Request): Request = {
     val dropHeader = request.headers.find(nameValue => {

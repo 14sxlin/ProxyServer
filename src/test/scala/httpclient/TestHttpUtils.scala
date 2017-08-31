@@ -16,15 +16,4 @@ class TestHttpUtils extends FunSuite {
     res.close()
     client.close()
   }
-
-  test("get with query string"){
-    val httpGet = new HttpGet("http://pmm.people.com.cn/main/s?user=people|2016people|textlink03&db=people&border=0&local=yes&js=ie")
-    val client = HttpClients.createDefault()
-    val res = client.execute(httpGet)
-    assert(res.getStatusLine.toString != null)
-    res.close()
-    client.close()
-  }
-
-
 }

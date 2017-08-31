@@ -4,9 +4,9 @@ import entity.response.{BinaryResponse, Response, TextResponse}
 import org.apache.http.HttpHeaders
 
 /**
-  * Created by sparr on 2017/8/23.
+  * Created by linsixin on 2017/8/23.
   */
-object ChuckFilter extends ResponseFilter {
+object ChunkFilter extends ResponseFilter {
 
   val transferEncoding = HttpHeaders.TRANSFER_ENCODING
   override def handle(response: Response): Response = {

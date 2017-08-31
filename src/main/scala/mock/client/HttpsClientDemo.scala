@@ -12,5 +12,5 @@ object HttpsClientDemo extends App{
   val httpsGet = new HttpGet("http://www.autohome.com.cn/beijing/")
   val response = HttpUtils.execute(httpsGet)
 
-  println(response.mkHttpString)
+  println(response.mkHttpString())
 }
