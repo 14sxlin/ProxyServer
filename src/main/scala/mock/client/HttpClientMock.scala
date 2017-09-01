@@ -1,16 +1,16 @@
 package mock.client
 
-import java.io.FileOutputStream
-
+import http.RequestProxy
 import org.apache.http.HttpHost
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.entity.UrlEncodedFormEntity
-import org.apache.http.client.methods.{HttpGet, HttpPost}
+import org.apache.http.client.methods.{HttpGet, HttpPost, HttpUriRequest}
+import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.impl.client.HttpClients
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.util.EntityUtils
 import org.slf4j.LoggerFactory
-import utils.http.{FileUtils, IOUtils}
+import utils.http.IOUtils
 
 import scala.collection.JavaConversions._
 
@@ -20,7 +20,7 @@ import scala.collection.JavaConversions._
   */
 class HttpClientMock {
 
-  val logger = LoggerFactory.getLogger(getClass)
+  private val logger = LoggerFactory.getLogger(getClass)
 
 
   val localPostUri = "http://localhost:8080/LoginDemo/login.do"
@@ -65,23 +65,18 @@ class HttpClientMock {
     content
   }
 
-  def doGetByProxyWithHttp(targetHost:String,
-                           targetPort:Int,
-                           proxyHost:String,
+  def doGetByProxyWithHttp(proxyHost:String,
                            proxyPort:Int,
                            uri:String) : String =  {
     val client = HttpClients.createDefault()
 
-    val target = new HttpHost(targetHost,targetPort,"http")
     val proxy = new HttpHost(proxyHost,proxyPort,"http")
     val config = RequestConfig.custom()
                     .setProxy(proxy).build()
     val request = new HttpGet(uri)
     request.setConfig(config)
 
-    logger.info("Execute request : {} via {} to {}",request.getRequestLine,proxy,target)
-
-    val response = client.execute(target,request)
+    val response = client.execute(request)
 
     logger.info("response status : {}",response.getStatusLine)
     for( header <- response.getAllHeaders)
@@ -89,23 +84,20 @@ class HttpClientMock {
 
     val entity = response.getEntity
     val content = IOUtils.dataFromInputStream(entity.getContent)
-    FileUtils.save2File("logs/test.jpg",content)
-    response.close()
-    client.close()
+//    FileUtils.save2File("logs/test.jpg",content)
+//    response.close()
+//    client.close()
 
     new String(content,"utf-8")
   }
 
 
-  def doPostByProxyWithHttp(targetHost:String,
-                            targetPort:Int,
-                            proxyHost:String,
+  def doPostByProxyWithHttp(proxyHost:String,
                             proxyPort:Int,
                             uri:String,
                             params:Array[(String,String)]): String ={
     val client = HttpClients.createDefault()
 
-    val target = new HttpHost(targetHost,targetPort,"http")
     val proxy = new HttpHost(proxyHost,proxyPort,"http")
     val config = RequestConfig.custom()
       .setProxy(proxy).build()
@@ -121,9 +113,7 @@ class HttpClientMock {
 
     request.setEntity(new UrlEncodedFormEntity(nameValuePairs.toList))
 
-    logger.info("Execute request : {} via {} to {}",request.getRequestLine,proxy,target)
-
-    val response = client.execute(target,request)
+    val response = client.execute(request)
 
     logger.info("response status : {}",response.getStatusLine)
     for( header <- response.getAllHeaders)
@@ -135,6 +125,30 @@ class HttpClientMock {
 
     content
 
+  }
+
+  def doRequestProxyInPool(request:HttpUriRequest,
+                         proxy:RequestProxy,
+                         context:HttpClientContext
+                        ) : String =  {
+    val response = proxy.doRequest(request,context)
+    logger.info("response status : {}",response.firstLine)
+    response.mkHttpString()
+  }
+
+  def buildProxyRequest(proxyHost:String,
+                        proxyPort:Int,
+                        request:HttpUriRequest):HttpUriRequest = {
+    val proxy = new HttpHost(proxyHost,proxyPort,"http")
+    val config = RequestConfig.custom()
+      .setProxy(proxy).build()
+    request match {
+      case r:HttpGet =>
+        r.setConfig(config)
+      case r:HttpPost =>
+        r.setConfig(config)
+    }
+    request
   }
 
 }
