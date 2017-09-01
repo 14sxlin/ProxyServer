@@ -3,6 +3,7 @@ package connection
 import constants.LoggerMark
 import entity.response.Response
 import filter.ResponseFilterChain
+import org.apache.http.HttpHeaders
 import org.apache.http.client.protocol.HttpClientContext
 import org.slf4j.LoggerFactory
 
@@ -25,9 +26,12 @@ object ClientServiceUnit{
                     responseFilterChain: ResponseFilterChain.type
                       = ResponseFilterChain ) : Response => Unit = {
     response =>
-      val data = responseFilterChain.handle(response)
-        .mkHttpBinary()
-      val content = response.mkHttpString()
+      val filtedResponse = responseFilterChain.handle(response)
+      val data = filtedResponse.mkHttpBinary()
+      val content = filtedResponse.mkHttpString()
+      assert(content.contains(HttpHeaders.CONTENT_LENGTH),
+        "filter doesn't work"
+      )
       val minLen = Math.min(content.length,1000)
       logger.info(s"${LoggerMark.down} \n" +
         s"${content.substring(0,minLen)}\n" +
