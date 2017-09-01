@@ -2,7 +2,7 @@ package http
 
 import java.util.concurrent.TimeUnit
 
-import connection.ConnectionConstants
+import constants.{ConnectionConstants, LoggerMark}
 import entity.response.{BinaryResponse, Response, TextResponse}
 import org.apache.commons.lang3.StringUtils
 import org.apache.http.HttpHeaders
@@ -31,6 +31,7 @@ class ConnectionPoolingClient {
                 context: HttpClientContext,
                 encoding:String = "utf8") : Response = {
     val httpResponse = client.execute(request,context)
+    logger.info(s"${LoggerMark.down} successfully get response")
     val entity = httpResponse.getEntity
     val headers = httpResponse.getAllHeaders.map(h => (h.getName, h.getValue))
 
@@ -68,6 +69,10 @@ class ConnectionPoolingClient {
     client.close()
   }
 
+  /**
+    *
+    * @param time time in second
+    */
   def closeIdleConnection(time:Int):Unit = {
     cm.closeIdleConnections(time,TimeUnit.SECONDS)
   }

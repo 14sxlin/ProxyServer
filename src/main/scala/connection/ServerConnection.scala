@@ -3,6 +3,7 @@ package connection
 import java.net.Socket
 
 import connection.control.ActiveControl
+import constants.ConnectionConstants
 
 /**
   * Created by linsixin on 2017/8/20.

@@ -1,6 +1,6 @@
 package connection
 
-import constants.LoggerMark
+import constants.{ConnectionConstants, LoggerMark}
 import entity.response.Response
 import filter.ResponseFilterChain
 import org.apache.http.HttpHeaders

@@ -3,6 +3,7 @@ package connection.dispatch
 import java.util.concurrent.ArrayBlockingQueue
 
 import connection.control.ClientServicePool
+import constants.LoggerMark
 import entity.request.RequestUnit
 import http.RequestProxy
 import org.slf4j.LoggerFactory
@@ -22,6 +23,7 @@ class RequestConsumeThread(conPool:ClientServicePool,
 
   override def run(): Unit = {
     while(true){
+      logger.info(s"${LoggerMark.process} begin to take request")
       try {
         val requestUnit = requestQueue.take()
         logger.info("take 1 request,rest size :"+requestQueue.size())
@@ -35,6 +37,7 @@ class RequestConsumeThread(conPool:ClientServicePool,
         }
       }catch{
         case e:Exception =>
+          logger.warn(s"fail in $getName : ${e.getMessage}")
           onFail(e)
       }
     }

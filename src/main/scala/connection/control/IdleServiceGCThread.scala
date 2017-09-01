@@ -1,6 +1,6 @@
 package connection.control
 
-import connection.{ConnectionConstants, ServiceUnit}
+import connection.ServiceUnit
 import org.slf4j.LoggerFactory
 
 /**

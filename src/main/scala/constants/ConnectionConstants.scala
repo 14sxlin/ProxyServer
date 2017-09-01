@@ -1,4 +1,4 @@
-package connection
+package constants
 
 /**
   * Created by linsixin on 2017/8/29.
