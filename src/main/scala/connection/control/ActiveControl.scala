@@ -1,5 +1,6 @@
 package connection.control
 
+import constants.LoggerMark
 import org.slf4j.LoggerFactory
 
 /**
@@ -9,23 +10,34 @@ import org.slf4j.LoggerFactory
   */
 trait ActiveControl {
 
-  private val logger = LoggerFactory.getLogger(getClass)
-
   protected val idleThreshold : Long
 
-  protected var last : Long = System.currentTimeMillis()
+  private var last : Long = System.currentTimeMillis()
+
+  private val logger = LoggerFactory.getLogger(getClass)
+  private var hasIdle = false
 
   def closeWhenNotActive():Unit
 
   def updateActiveTime():Unit = {
     this.synchronized{
+      if(hasIdle)
+        return
       last = System.currentTimeMillis()
+
     }
     logger.info(s"active at $last")
   }
 
   def isIdle : Boolean = {
-    System.currentTimeMillis() - last > idleThreshold
+    this.synchronized{
+      if(!hasIdle){
+        val period = System.currentTimeMillis() - last
+        logger.info(s"${LoggerMark.process} from last : ${period/1000} > ${idleThreshold/1000} ? then idle")
+        hasIdle = period > idleThreshold
+        hasIdle
+      }else hasIdle
+    }
   }
 
 }

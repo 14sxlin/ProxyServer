@@ -10,12 +10,14 @@ class IdleServiceGCThread[T <: ServiceUnit](val conPool:ServiceUnitPool[T]) exte
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  private val gcPeriod = ConnectionConstants.idleThreshold + 1000
+  private val gcPeriod = 5000L
+
+  setDaemon(true)
 
   override def run():Unit = {
     var zeroCount = 0
     this.synchronized{
-      while(!isInterrupted){
+      while(true){
         val gcCount = conPool.removeIdleServiceUnit()
         logger.info(s"close $gcCount idle connection in pool,zeroCount:($zeroCount)")
         if( gcCount == 0){
