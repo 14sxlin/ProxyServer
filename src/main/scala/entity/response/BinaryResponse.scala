@@ -22,4 +22,6 @@ case class BinaryResponse(firstLine:String,
       "\r\n"*2 +
       new String(body,encoding)
   }
+
+  override def getContentLength = body.length
 }

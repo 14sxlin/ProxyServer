@@ -9,7 +9,6 @@ case class TextResponse(firstLine:String,
                         headers: Array[(String, String)],
                         body:String) extends Response{
 
-
   override def mkHttpBinary(encoding: String = "utf-8"): Array[Byte] = {
     mkHttpString().getBytes(encoding)
   }
@@ -28,4 +27,5 @@ case class TextResponse(firstLine:String,
       .append(s"$body").toString().trim
   }
 
+  override def getContentLength :Int = body.length
 }
