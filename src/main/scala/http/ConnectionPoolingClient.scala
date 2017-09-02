@@ -6,6 +6,7 @@ import constants.{ConnectionConstants, LoggerMark}
 import entity.response.{BinaryResponse, Response, TextResponse}
 import org.apache.commons.lang3.StringUtils
 import org.apache.http.HttpHeaders
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.impl.client.HttpClients
@@ -22,10 +23,20 @@ class ConnectionPoolingClient {
   private val logger = LoggerFactory.getLogger(getClass)
 
   private val cm = new PoolingHttpClientConnectionManager()
+  import constants.Timeout._
+  private val config =
+    RequestConfig.custom()
+        .setConnectionRequestTimeout(connectionRequestTimeout)
+        .setConnectTimeout(connectTimeout)
+        .setSocketTimeout(socketTimeout)
+        .build()
   cm.setMaxTotal(ConnectionConstants.maxConnection)
-  private val client = HttpClients
-    .custom().setConnectionManager(cm)
-    .build()
+  private val client =
+    HttpClients.custom()
+        .setConnectionManager(cm)
+        .setDefaultRequestConfig(config)
+        .build()
+
 
   def doRequest(request:HttpUriRequest,
                 context: HttpClientContext,
@@ -35,16 +46,19 @@ class ConnectionPoolingClient {
     val entity = httpResponse.getEntity
     val headers = httpResponse.getAllHeaders.map(h => (h.getName, h.getValue))
 
-    if(isTextEntity(headers))
+    if(isTextEntity(headers)) {
+      logger.info(s"${LoggerMark.process} Text Entity Response")
       TextResponse(
         httpResponse.getStatusLine.toString,
         headers,
         entity match {
           case null => StringUtils.EMPTY
-          case _ => EntityUtils.toString(entity,encoding).trim
+          case _ => EntityUtils.toString(entity, encoding).trim
         }
       )
-    else
+    }
+    else {
+      logger.info(s"${LoggerMark.process} Binary Entity Response")
       BinaryResponse(
         httpResponse.getStatusLine.toString,
         headers,
@@ -54,6 +68,7 @@ class ConnectionPoolingClient {
             IOUtils.dataFromInputStream(entity.getContent)
         }
       )
+    }
   }
 
   private def isTextEntity(headers:Array[(String,String)]) = {
@@ -74,6 +89,7 @@ class ConnectionPoolingClient {
     * @param time time in second
     */
   def closeIdleConnection(time:Int):Unit = {
+    cm.closeExpiredConnections()
     cm.closeIdleConnections(time,TimeUnit.SECONDS)
   }
 
