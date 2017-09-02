@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory
 /**
   * Created by linsixin on 2017/8/25.
   */
-class RequestDispatcher(pool:ClientServicePool) {
+class ClientRequestDispatcher(pool:ClientServicePool) {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
