@@ -3,7 +3,7 @@ import java.util.concurrent.ArrayBlockingQueue
 
 import connection._
 import connection.control.ClientServicePool
-import connection.dispatch.{RequestConsumeThread, RequestDispatcher}
+import connection.dispatch.{RequestConsumeThread, ClientRequestDispatcher}
 import constants.{ConnectionConstants, LoggerMark}
 import entity.request._
 import entity.request.adapt.{GetRequestAdapter, PostRequestAdapter, RequestAdapter}
@@ -29,7 +29,7 @@ object HttpProxyServerRun2 extends App {
   val requestQueue = new ArrayBlockingQueue[RequestUnit](ConnectionConstants.maxConnection)
 
   val clientPool = new ClientServicePool
-  val requestDispatcher = new RequestDispatcher(clientPool)
+  val requestDispatcher = new ClientRequestDispatcher(clientPool)
 
   val requestConsumeThread1 = new RequestConsumeThread(clientPool,requestQueue,requestProxy)
   requestConsumeThread1.setName("Request-Consume-Thread1")
@@ -38,9 +38,11 @@ object HttpProxyServerRun2 extends App {
   requestConsumeThread1.start()
   val requestConsumeThread2 = new RequestConsumeThread(clientPool,requestQueue,requestProxy)
   requestConsumeThread2.setName("Request-Consume-Thread2")
+  requestConsumeThread2.setPriority(10)
   requestConsumeThread2.start()
   val requestConsumeThread3 = new RequestConsumeThread(clientPool,requestQueue,requestProxy)
   requestConsumeThread3.setName("Request-Consume-Thread3")
+  requestConsumeThread3.setPriority(10)
   requestConsumeThread3.start()
 
 
@@ -80,10 +82,12 @@ object HttpProxyServerRun2 extends App {
     }
 
 
-    val processThread = new Thread(processRun)
+    val processThread = new Thread(runGroup,processRun)
     processThread.setName(s"Process-Thread-" +
       s"${clientConnection.socket.getRemoteSocketAddress.toString}")
+    processThread.setPriority(3)
     processThread.start()
+    logger.info(s"${LoggerMark.resource} process-active-count: ${runGroup.activeCount()}")
   }
 
   private def startNewThreadToProcess(client: ClientConnection):Unit = {
@@ -103,6 +107,8 @@ object HttpProxyServerRun2 extends App {
 //        client.writeTextData(establishInfo)
         authenticate = false
         responseAndAskForNewData(client,host,port)
+        logger.info(s"${LoggerMark.resource} not to process, close resource")
+        client.closeAllResource()
       case _ => //post get
         val hash = HashUtils.getHash(client,wrappedRequest)
         processGetOrPostRequest(hash,wrappedRequest,client)
@@ -114,7 +120,7 @@ object HttpProxyServerRun2 extends App {
             processGetOrPostRequest(hash,newWrappedRequest,client)
             readRemainingRequest()
           }else{
-            //TODO
+            //TODO maybe should so something
             logger.info(s"${LoggerMark.process} nothing to read ..close resource ")
             client.closeAllResource()
           }
@@ -170,6 +176,7 @@ object HttpProxyServerRun2 extends App {
       requestQueue.put(requestUnit)
       logger.info(s"${LoggerMark.resource} queue size = ${requestQueue.size()}")
       connectionPoolingClient.closeIdleConnection(2)
+
     }
   }
 

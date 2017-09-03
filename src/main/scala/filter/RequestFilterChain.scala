@@ -9,7 +9,7 @@ import filter.request.{InvalidUrlCharacterFilter, ProxyHeaderFilter, RequestCont
 object RequestFilterChain {
 
   val requestFilters = Array(
-//    ProxyHeaderFilter,
+    ProxyHeaderFilter,
     RequestContentLengthFilter,
     InvalidUrlCharacterFilter
   )
