@@ -46,29 +46,34 @@ class ConnectionPoolingClient {
     val entity = httpResponse.getEntity
     val headers = httpResponse.getAllHeaders.map(h => (h.getName, h.getValue))
 
+    var response :Response = null
     if(isTextEntity(headers)) {
       logger.info(s"${LoggerMark.process} Text Entity Response")
-      TextResponse(
-        httpResponse.getStatusLine.toString,
-        headers,
-        entity match {
-          case null => StringUtils.EMPTY
-          case _ => EntityUtils.toString(entity, encoding).trim
-        }
-      )
+      response =
+        TextResponse(
+          httpResponse.getStatusLine.toString,
+          headers,
+          entity match {
+            case null => StringUtils.EMPTY
+            case _ => EntityUtils.toString(entity, encoding).trim
+          }
+        )
     }
     else {
       logger.info(s"${LoggerMark.process} Binary Entity Response")
-      BinaryResponse(
-        httpResponse.getStatusLine.toString,
-        headers,
-        entity match {
-          case null => Array.emptyByteArray
-          case _ =>
-            IOUtils.dataFromInputStream(entity.getContent)
-        }
-      )
+      response =
+        BinaryResponse(
+          httpResponse.getStatusLine.toString,
+          headers,
+          entity match {
+            case null => Array.emptyByteArray
+            case _ =>
+              IOUtils.dataFromInputStream(entity.getContent)
+          }
+        )
     }
+    httpResponse.close()
+    response
   }
 
   private def isTextEntity(headers:Array[(String,String)]) = {
