@@ -9,10 +9,13 @@ import org.slf4j.LoggerFactory
 
 /**
   * Created by linsixin on 2017/8/29.
+  * When put and get service unit into
+  * or from pool, updateActive() will
+  * be call.
   */
 case class ClientServiceUnit(clientConnection: ClientConnection,
                              context:HttpClientContext) extends ServiceUnit{
-  override protected val idleThreshold: Long = ConnectionConstants.idleThreshold + 8000L
+  override protected val idleThreshold: Long = ConnectionConstants.idleThreshold
 
   override def closeWhenNotActive(): Unit = {
     clientConnection.closeAllResource()
