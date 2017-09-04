@@ -101,14 +101,12 @@ object HttpProxyServerRun2 extends App {
         val uri = wrappedRequest.uri
         val host = uri.split(":").head.trim
         val port = uri.split(":").last.trim.toInt
-        //don't process 433 now
-        //process it later
-//        val establishInfo = HttpUtils.establishConnectInfo
-//        client.writeTextData(establishInfo)
-        authenticate = false
+        val establishInfo = HttpUtils.establishConnectInfo
+        client.writeTextData(establishInfo)
+//        authenticate = false
         responseAndAskForNewData(client,host,port)
-        logger.info(s"${LoggerMark.resource} not to process, close resource")
-        client.closeAllResource()
+//        logger.info(s"${LoggerMark.resource} not to process, close resource")
+//        client.closeAllResource()
       case _ => //post get
         val hash = HashUtils.getHash(client,wrappedRequest)
         processGetOrPostRequest(hash,wrappedRequest,client)
@@ -120,7 +118,7 @@ object HttpProxyServerRun2 extends App {
             processGetOrPostRequest(hash,newWrappedRequest,client)
             readRemainingRequest()
           }else{
-            //TODO maybe should so something
+            //TODO maybe should do something
             logger.info(s"${LoggerMark.process} nothing to read ..close resource ")
             client.closeAllResource()
           }
@@ -184,12 +182,19 @@ object HttpProxyServerRun2 extends App {
   var authenticate = true
   def responseAndAskForNewData(client: ClientConnection,host:String,port:Int): Unit = {
     if(authenticate) {
-      val serverCon = new ServerConnection(host,port)
-      serverCon.openConnection()
-      val transfer = new DataTransfer(client,serverCon)
-      transfer.communicate()
-//      serverCon.closeWhenNotActiveIn(1000L)
-//      client.closeWhenNotActiveIn(1000L)
+      val communicateRun = new Runnable {
+        override def run(): Unit = {
+          val serverCon = new ServerConnection(host,port)
+          serverCon.openConnection()
+          val transfer = new DataTransfer(client,serverCon)
+          transfer.communicate()
+        }
+      }
+      val communicateThread = new Thread(communicateRun)
+      communicateThread.setName("Communication-Thread")
+      communicateThread.start()
+//      serverCon.closeWhenNotActiveIn(5000L)
+//      client.closeWhenNotActiveIn(5000L)
     }else{
       client.writeTextData(HttpUtils.unauthenicationInfo)
       client.closeAllResource()

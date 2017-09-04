@@ -66,10 +66,10 @@ class DataTransfer(client: ClientConnection,
     checkIfConnectionOpen()
     tryMaybeSocketClosed{
       while(true){
-        val toServer = transOnceFromClientToServer()
-        logger.info(s"${LoggerMark.up} length: $toServer")
-        val toClient = transOnceFromServerToClient()
-        logger.info(s"${LoggerMark.down} length: $toClient")
+        val toServerSize = transOnceFromClientToServer()
+        logger.info(s"${LoggerMark.up} length: $toServerSize")
+        val toClientSize = transOnceFromServerToClient()
+        logger.info(s"${LoggerMark.down} length: $toClientSize")
       }
     }
   }
@@ -84,7 +84,9 @@ class DataTransfer(client: ClientConnection,
       run
     }catch{
       case  e : SocketException =>
-        logger.error(s"socket closed : ${e.getMessage}...")
+        logger.error(s"${LoggerMark.resource}: ${e.getMessage}... close all sockets")
+        client.closeAllResource()
+        server.closeAllResource()
     }
   }
 
