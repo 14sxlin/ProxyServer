@@ -86,13 +86,12 @@ object HttpClientRun extends App{
     println(result.substring(0,min))
   }
 
-  runForTimes(20){
+  runForTimes(1){
     val t2 = doGetByProxyThread(getUrl,onSuccess);t2.start()
-    //  t1.join()
-
+    t2.join()
   }
 
-  Thread.sleep(6000)
+//  Thread.sleep(6000)
 
 }
 
