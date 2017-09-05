@@ -1,20 +1,16 @@
 package filter.request
 
-import entity.request.{Request, TotalEncryptRequest}
-import org.apache.http.HttpHeaders
+import entity.request._
 
 /**
   * Created by linsixin on 2017/8/11.
   */
 trait RequestFilter {
 
-  def handle(request: Request): Request = {
+  def handle(request: HeaderRecognizedRequest): HeaderRecognizedRequest = {
     request match {
-      case null => Request.EMPTY
-      case Request.EMPTY => request
-      case _ : TotalEncryptRequest =>
-        request
-      case _ =>
+      case null => throw new IllegalArgumentException("request should not be null")
+      case request : HeaderRecognizedRequest =>
         format(request)
     }
   }
@@ -24,7 +20,7 @@ trait RequestFilter {
     *                or TotalEncryptRequest
     * @return new request after processing
     */
-  protected def format(request: Request):Request
+  protected def format(request: HeaderRecognizedRequest):HeaderRecognizedRequest
 
 
 }

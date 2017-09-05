@@ -1,6 +1,6 @@
 package filter.request
 
-import entity.request.Request
+import entity.request.HeaderRecognizedRequest
 import org.apache.http.HttpHeaders
 
 /**
@@ -11,11 +11,9 @@ import org.apache.http.HttpHeaders
   */
 object ProxyHeaderFilter extends RequestFilter {
 
-  override protected def format(request: Request): Request = {
-    val dropHeader = request.headers.find(nameValue => {
-      val header = nameValue._1
-      header == HttpHeaders.CONNECTION
-    }) match {
+  override protected def format(request: HeaderRecognizedRequest): HeaderRecognizedRequest = {
+    def isConnectionHeader(nameValue:(String,String)) = nameValue._1 == HttpHeaders.CONNECTION
+    val needDropHeaders = request.headers find isConnectionHeader match {
       case Some(nameValue) =>
         val value = nameValue._2
         value.trim.split(",")
@@ -26,8 +24,8 @@ object ProxyHeaderFilter extends RequestFilter {
       name.contains("Proxy") ||
         name.contains("Connection") ||
         name.contains("Keep-Alive") ||
-        dropHeader.contains(name)
+        needDropHeaders.contains(name)
     })
-    Request(request.firstLine, newHeaders, request.body)
+    request.updateHeaders(newHeaders)
   }
 }

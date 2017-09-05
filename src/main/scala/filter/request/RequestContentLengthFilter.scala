@@ -1,6 +1,6 @@
 package filter.request
 
-import entity.request.{Request, TotalEncryptRequest}
+import entity.request.HeaderRecognizedRequest
 import org.apache.http.HttpHeaders
 
 /**
@@ -11,12 +11,10 @@ import org.apache.http.HttpHeaders
   */
 object RequestContentLengthFilter extends RequestFilter {
 
-  override protected def format(request: Request): Request = {
-    Request(
-      request.firstLine,
-      request.headers.filter(nameValue =>
-        nameValue._1 != HttpHeaders.CONTENT_LENGTH),
-      request.body
-    )
+  override protected def format(request: HeaderRecognizedRequest): HeaderRecognizedRequest = {
+    request.updateHeaders(
+      request.headers.filter{nameValue =>
+        nameValue._1 != HttpHeaders.CONTENT_LENGTH
+      })
   }
 }

@@ -1,7 +1,7 @@
 package filter.request
 import java.net.URLEncoder
 
-import entity.request.Request
+import entity.request.{ByteBodyRequest, EmptyBodyRequest, HeaderRecognizedRequest, TextRequest}
 
 /**
   * Created by linsixin on 2017/8/31.
@@ -10,7 +10,7 @@ object InvalidUrlCharacterFilter extends RequestFilter{
 
   private val invalidChars = Array("|")
 
-  override protected def format(request: Request):Request = {
+  override protected def format(request: HeaderRecognizedRequest):HeaderRecognizedRequest = {
     val uri = request.uri
     var newUri = ""
     def replaceInvalidChar() = {
@@ -29,11 +29,7 @@ object InvalidUrlCharacterFilter extends RequestFilter{
       val parts = request.firstLine.split(" ")
       assert(parts.length == 3)
       parts(1) = newUri
-      Request(
-        formNewRequestLine(parts),
-        request.headers,
-        request.body
-      )
+      request.updateFirstLine(parts.mkString(" "))
     }else request
   }
 
@@ -43,9 +39,5 @@ object InvalidUrlCharacterFilter extends RequestFilter{
         return true
     }
     false
-  }
-
-  private def formNewRequestLine(parts:Array[String]) = {
-    parts(0) + " " + parts(1) + " " + parts(2)
   }
 }

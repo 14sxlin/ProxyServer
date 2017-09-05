@@ -1,6 +1,6 @@
 package filter
 
-import entity.request.Request
+import entity.request.{HeaderRecognizedRequest, Request}
 import filter.request.{InvalidUrlCharacterFilter, ProxyHeaderFilter, RequestContentLengthFilter}
 
 /**
@@ -14,7 +14,7 @@ object RequestFilterChain {
     InvalidUrlCharacterFilter
   )
 
-  def handle(request:Request):Request = {
+  def handle(request:HeaderRecognizedRequest):HeaderRecognizedRequest = {
     var newRequest = request
     requestFilters.foreach{ handler =>
       newRequest = handler.handle(newRequest)
