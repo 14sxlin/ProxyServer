@@ -1,6 +1,6 @@
 package entity.request.adapt
 
-import entity.request.Request
+import entity.request.{HeaderRecognizedRequest, Request}
 import org.apache.http.client.methods.HttpUriRequest
 
 /**
@@ -16,10 +16,9 @@ trait RequestAdapter {
 
   def adapt(request: Request): HttpUriRequest
 
-  def putHeaders(request: Request, httpRequest: HttpUriRequest): Unit = {
+  def putHeaders(request: HeaderRecognizedRequest, httpRequest: HttpUriRequest): Unit = {
     for ((name, value) <- request.headers) {
       httpRequest.addHeader(name, value)
     }
   }
-
 }
