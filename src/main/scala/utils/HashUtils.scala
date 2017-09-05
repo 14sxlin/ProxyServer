@@ -1,7 +1,7 @@
 package utils.http
 
 import connection.ClientConnection
-import entity.request.Request
+import entity.request.HeaderRecognizedRequest
 
 
 /**
@@ -9,7 +9,7 @@ import entity.request.Request
   */
 object HashUtils {
 
-  def getHash(con: ClientConnection, request: Request) : String = {
+  def getHash(con: ClientConnection, request: HeaderRecognizedRequest) : String = {
     if(con == null || con.socket == null || request == null)
       throw new IllegalArgumentException("con and request should not be null")
     val addr = con.socket.getInetAddress

@@ -1,6 +1,6 @@
 package entity.request.adapt
 
-import entity.request.Request
+import entity.request.BodyByteRequest
 import org.apache.http.client.methods.{HttpGet, HttpUriRequest}
 
 /**

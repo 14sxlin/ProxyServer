@@ -1,7 +1,7 @@
 package entity.request.adapt
 
 import entity.body.{EmptyBody, FormParams, TextPlain}
-import entity.request.Request
+import entity.request.BodyByteRequest
 import entity.request.wrapped.WrappedRequest
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpPost, HttpUriRequest}
@@ -13,7 +13,7 @@ import scala.collection.JavaConversions._
 /**
   * Created by linsixin on 2017/8/19.
   */
-object PostRequestAdapter extends RequestAdapter {
+object BodyRequestAdapter extends RequestAdapter {
 
   override def adapt(request: Request): HttpUriRequest = {
     val httpPost = new HttpPost(request.firstLineInfo._2)

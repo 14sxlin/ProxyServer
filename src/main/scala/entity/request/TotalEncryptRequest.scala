@@ -10,8 +10,7 @@ package entity.request
   * this class should pass data directly
   * without any process.
   */
-class TotalEncryptRequest(data:String) extends Request("",Array.empty,data){
-
-  override def mkHttpString: String = data
+case class TotalEncryptRequest(bytes:Array[Byte]) extends Request{
+  override def mkHttpBinary() = bytes
 }
 //case class's parameters are always val

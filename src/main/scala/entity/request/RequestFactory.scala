@@ -3,45 +3,129 @@ package entity.request
 import constants.HttpRequestMethod
 import exception.NotHeaderException
 import org.apache.commons.lang3.StringUtils
+import org.apache.http.HttpHeaders
 import org.slf4j.{Logger, LoggerFactory}
 
 /**
   * Created by linsixin on 2017/8/20.
-  * This is object due to read input stream and
+  * This object dues to read input stream and
   * build up a request class, which separates
   * request line,headers and body
   */
 object RequestFactory {
+
+  type OptionBytes = Option[Array[Byte]]
+  type OptionRequestInBytes = Option[Array[Array[Byte]]]
+
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
   private val NOT_FOUND = -1
+  private val LF = "\n".getBytes.head
+  private val CR = "\r".getBytes.head
 
-  def buildRequest(requestRawData: String): Request = {
-
-    if (requestRawData.isEmpty) {
+  def buildRequest(requestBytes: Array[Byte],
+                   encoding: String = "utf8"): Request = {
+    if (requestBytes == null || requestBytes.isEmpty) {
       logger.warn("request raw data is empty")
-      return Request.EMPTY
+      return EmptyRequest
     }
-    val parts = getParts(requestRawData)
-    val firstLine = parts(0)
+    val (firstLinePart, headersAndBodyBytes) = getFirstLinePart(requestBytes)
+    if (firstLinePart.isEmpty || headersAndBodyBytes.isEmpty)
+      return TotalEncryptRequest(requestBytes)
 
-    if(isNotCorrectHttpLine(firstLine) || parts.length == 0){
-      return new TotalEncryptRequest(requestRawData)
-    }
+    val (headerPart, bodyPart) = getHeaderAndBodyParts(headersAndBodyBytes.get)
+    if (headerPart.isEmpty)
+      return TotalEncryptRequest(requestBytes)
 
-    if(hasBodyPart(parts)){
-      buildRequestWithBody(firstLine,parts)
-    }else{
-      buildRequestNoBody(firstLine,parts)
+    if (bodyPart.isEmpty || bodyPart.get.isEmpty) { //notice this
+      formEmptyBodyRequest(firstLinePart.get,headerPart.get)
+    } else {
+      val temp = formEmptyBodyRequest(firstLinePart.get,headerPart.get)
+      temp.getContentEncoding
+      temp.getHeaderValue(HttpHeaders.CONTENT_TYPE) match {
+        case None =>
+          temp.toByteBodyRequest(bodyPart.get)
+        case Some(contentType) =>
+          if(StringUtils.contains(contentType,"text/"))
+          {
+            val charset = StringUtils.substringAfter(contentType,"charset=")
+            if(charset.isEmpty)
+              temp.toTextRequest(new String(bodyPart.get))
+            else
+              temp.toTextRequest(new String(bodyPart.get,charset))
+          }
+          else
+            temp.toByteBodyRequest(bodyPart.get)
+      }
     }
   }
 
-  private def getParts(requestRawData: String): Array[String] = {
-    requestRawData.trim.split("\n").map(_.trim)
+  private def formEmptyBodyRequest(firstLineBytes:Array[Byte],
+                                   headersBytes:Array[Byte]) : EmptyBodyRequest= {
+    val (firstLine,headers) = parse(firstLineBytes,headersBytes)
+    EmptyBodyRequest(
+      firstLine,
+      headers
+    )
+  }
+  private def parse(firstLine:Array[Byte],
+                    headers:Array[Byte]):(String,Array[(String,String)]) = {
+    val f = new String(firstLine).trim
+    val h = new String(headers) split "\n" filterNot { _.trim.isEmpty } map {
+      header => string2Header(header.trim)
+    }
+    (f,h)
   }
 
-  def isNotCorrectHttpLine(firstLine:String): Boolean = {
-    if(firstLine == null){
+  private def getFirstLinePart(requestAllBytes: Array[Byte]): (OptionBytes, OptionBytes) = {
+    val firstIndexOfLF = requestAllBytes.indexOf(LF)
+    if (firstIndexOfLF == NOT_FOUND)
+      (None, None)
+    else {
+      val totalLength = requestAllBytes.length
+      if (firstIndexOfLF == totalLength)
+        (None, None)
+      else {
+        val firstLine = requestAllBytes.slice(0, firstIndexOfLF+1)
+        val restBytes = requestAllBytes.slice(firstIndexOfLF+1, totalLength)
+        (Some(firstLine), Some(restBytes))
+      }
+    }
+  }
+
+  private def getHeaderAndBodyParts(headersAndBodyBytes: Array[Byte]): (OptionBytes, OptionBytes) = {
+    val indexOfLF = headersAndBodyBytes.indexOf(LF)
+    if (indexOfLF == NOT_FOUND) // no headers
+      (None, None)
+    else if (indexOfLF == headersAndBodyBytes.length) // on body part or empty line
+      (Some(headersAndBodyBytes), None)
+    else { // may be has body
+      val totalLen = headersAndBodyBytes.length
+      var indexOfLFBeforeBody = indexOfLF
+      var tempIndexOfLF = indexOfLF
+      var nextByte = headersAndBodyBytes(tempIndexOfLF + 1)
+      def hasNextByte = tempIndexOfLF < totalLen - 1
+      while (hasNextByte &&  nextByte != LF &&  nextByte != CR) {
+        tempIndexOfLF = headersAndBodyBytes.indexOf(LF, tempIndexOfLF + 1)
+        nextByte = headersAndBodyBytes(tempIndexOfLF + 1)
+      }
+      if (!hasNextByte)
+        (Some(headersAndBodyBytes), None)
+      else {
+        if(nextByte == CR){ // using CRLF to separate
+          indexOfLFBeforeBody = tempIndexOfLF + 2 //skip CRLF
+          (Some(headersAndBodyBytes.slice(0,indexOfLFBeforeBody)),
+            Some(headersAndBodyBytes.slice(indexOfLFBeforeBody + 1, totalLen)))
+        }else // nextByte is LF means using LF to separate
+        indexOfLFBeforeBody = tempIndexOfLF + 1
+        (Some(headersAndBodyBytes.slice(0,indexOfLFBeforeBody)),
+          Some(headersAndBodyBytes.slice(indexOfLFBeforeBody + 1, totalLen)))
+      }
+    }
+  }
+
+  def isNotCorrectHttpLine(firstLine: String): Boolean = {
+    if (firstLine == null) {
       logger.info("first line is null")
       return true
     }
@@ -50,39 +134,13 @@ object RequestFactory {
       !HttpRequestMethod.list.contains(parts(0).trim)
   }
 
-  private def buildRequestWithBody(firstLine:String,parts:Array[String]) = {
-    if (parts.length > 2) {
-      val indexOfEmptyLine = parts.indexOf("")
-      val headers = parts.slice(1, indexOfEmptyLine).map(parseHeaderInLine)
-      val body = parts.slice(indexOfEmptyLine+1,parts.length).mkString
-      Request(firstLine, headers, body)
-    } else {
-      assert(parts.length == 2, "no header with body part length should be 2")
-      Request(firstLine, Array.empty, parts.last)
-    }
-  }
-
-  private def buildRequestNoBody(firstLine:String,parts:Array[String]) = {
-    if (parts.length >= 2) {
-      val headers = parts.slice(1, parts.length).map(parseHeaderInLine)
-      Request(firstLine, headers, StringUtils.EMPTY)
-    } else Request(firstLine, Array.empty, StringUtils.EMPTY)
-  }
-
-  private def parseHeaderInLine(line : String): (String,String) ={
+  private def string2Header(line: String): (String, String) = {
     val index = line.indexOf(":")
-    if(index == NOT_FOUND){
+    if (index == NOT_FOUND) {
       throw new NotHeaderException(line)
     }
-    val name = line.substring(0,index).trim
-    val value = line.substring(index+1).trim
-    (name,value)
+    val name = line.substring(0, index).trim
+    val value = line.substring(index + 1).trim
+    (name, value)
   }
-
-  private def hasBodyPart(requestParts:Array[String]) = {
-    requestParts.contains("") &&
-      requestParts.indexOf("") != requestParts.length - 1
-  }
-
-
 }
