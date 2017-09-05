@@ -3,16 +3,15 @@ import java.util.concurrent.ArrayBlockingQueue
 
 import connection._
 import connection.control.ClientServicePool
-import connection.dispatch.{RequestConsumeThread, ClientRequestDispatcher}
+import connection.dispatch.{ClientRequestDispatcher, RequestConsumeThread}
 import constants.{ConnectionConstants, LoggerMark}
 import entity.request._
-import entity.request.adapt.{GetRequestAdapter, PostRequestAdapter, RequestAdapter}
-import entity.request.wrapped.{MessRequest, RequestWrapper, WrappedRequest}
+import entity.request.adapt.{NoneBodyRequestAdapter, RequestAdapter, RequestWithBodyAdapter}
 import filter.RequestFilterChain
 import http.{ConnectionPoolingClient, RequestProxy}
 import org.apache.http.client.protocol.HttpClientContext
 import org.slf4j.LoggerFactory
-import utils.http.{HashUtils, HttpUtils}
+import utils.{HashUtils, HttpUtils}
 
 import scala.annotation.tailrec
 
@@ -90,32 +89,36 @@ object HttpProxyServerRun2 extends App {
     logger.info(s"${LoggerMark.resource} process-active-count: ${runGroup.activeCount()}")
   }
 
+  // maybe this can make a conform api
   private def startNewThreadToProcess(client: ClientConnection):Unit = {
-    val wrappedRequest = readAndParseToWrappedRequest(client)
-    wrappedRequest match {
-      case WrappedRequest.Empty => //return
-        logger.warn("empty wrapped request")
-      case _: MessRequest => //return
-        logger.warn("mess wrapped request")
-      case _ if wrappedRequest.method =="CONNECT" =>
-        val uri = wrappedRequest.uri
+    val request = readAndParseToRequest(client)
+    request match {
+      case EmptyRequest => //return
+        logger.warn(s"${LoggerMark.resource} empty request..close socket")
+        client.closeAllResource()
+      case request: TotalEncryptRequest => //ssl
+        logger.warn(s"${LoggerMark.process} total encrypt request")
+
+      case request:HeaderRecognizedRequest if request.method =="CONNECT" =>
+        val uri = request.uri
         val host = uri.split(":").head.trim
         val port = uri.split(":").last.trim.toInt
         val establishInfo = HttpUtils.establishConnectInfo
         client.writeTextData(establishInfo)
 //        authenticate = false
-        responseAndAskForNewData(client,host,port)
+        response443AndStartCommunicate(client,host,port)
 //        logger.info(s"${LoggerMark.resource} not to process, close resource")
 //        client.closeAllResource()
-      case _ => //post get
-        val hash = HashUtils.getHash(client,wrappedRequest)
-        processGetOrPostRequest(hash,wrappedRequest,client)
+      case request : HeaderRecognizedRequest => //post get
+        val hash = HashUtils.getHash(client,request)
+        processGetOrPostRequest(hash,request,client)
         Thread.`yield`()
         @tailrec
         def readRemainingRequest() : Unit = {
-          val newWrappedRequest = readAndParseToWrappedRequest(client)
-          if(newWrappedRequest != WrappedRequest.Empty){
-            processGetOrPostRequest(hash,newWrappedRequest,client)
+          val newRequest = readAndParseToRequest(client)
+          if(newRequest != EmptyRequest){
+            processGetOrPostRequest(hash, //todo this asInstance is dangerous
+              newRequest.asInstanceOf[HeaderRecognizedRequest],client)
             readRemainingRequest()
           }else{
             //TODO maybe should do something
@@ -128,37 +131,37 @@ object HttpProxyServerRun2 extends App {
 
   }
 
-  def readAndParseToWrappedRequest(client: ClientConnection):WrappedRequest = {
-    client.readTextData() match {
+  def readAndParseToRequest(client: ClientConnection):Request = {
+    client.readBinaryData() match {
       case Some(rawRequest) =>
-        logger.info(s"${LoggerMark.up} raw \n" + rawRequest)
-        val request = RequestFilterChain.handle(
-            RequestFactory.buildRequest(rawRequest)
-          )
-        RequestWrapper.wrap(request)
+        logger.info(s"${LoggerMark.up} raw in String: \n" + new String(rawRequest))
+        RequestFactory.buildRequest(rawRequest) match {
+          case r : TotalEncryptRequest => r
+          case r : HeaderRecognizedRequest =>
+            RequestFilterChain.handle(r)
+        }
       case None =>
-        WrappedRequest.Empty
+        //todo should close resource here
+        EmptyRequest
     }
 
 
   }
 
   private def processGetOrPostRequest(hash:String,
-                                      wrappedRequest: WrappedRequest,
+                                      request: HeaderRecognizedRequest,
                                       clientConnection: ClientConnection):Unit = {
-    assert(wrappedRequest != WrappedRequest.Empty)
     var adapter: RequestAdapter = null
-    val method = wrappedRequest.firstLineInfo._1
-    method match {
-      case "GET" =>
-        adapter = GetRequestAdapter
-      case "POST" =>
-        adapter = PostRequestAdapter
+    request match {
+      case _ : EmptyBodyRequest =>
+        adapter = NoneBodyRequestAdapter
       case _ =>
-        logger.error("unable to process :" + wrappedRequest.mkHttpString)
-        throw new MatchError("unable to process " + wrappedRequest.mkHttpString)
+        adapter = RequestWithBodyAdapter
+//      case _ =>
+//        logger.error("unable to process :" + request.mkHttpStringOfFirstLineAndHeaders)
+//        throw new MatchError("unable to process " + request.mkHttpStringOfFirstLineAndHeaders)
     } // great can assign object to variable
-    val httpUriRequest = adapter.adapt(wrappedRequest)
+    val httpUriRequest = adapter.adapt(request)
     if(requestDispatcher.containsKey(hash)){
       logger.info(s"${LoggerMark.resource} Already have a ClientServiceUnit $hash, rest ${requestQueue.size()}")
       val requestUnit = requestDispatcher.buildRequestUnit(hash,httpUriRequest)
@@ -180,7 +183,7 @@ object HttpProxyServerRun2 extends App {
 
 
   var authenticate = true
-  def responseAndAskForNewData(client: ClientConnection,host:String,port:Int): Unit = {
+  def response443AndStartCommunicate(client: ClientConnection, host:String, port:Int): Unit = {
     if(authenticate) {
       val communicateRun = new Runnable {
         override def run(): Unit = {
