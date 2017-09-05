@@ -1,6 +1,6 @@
 package entity.response
 
-import entity.request.EntityUtils
+import utils.RequestUtils
 
 /**
   * Created by linsixin on 2017/8/28.
@@ -11,14 +11,14 @@ case class BinaryResponse(firstLine:String,
 
   override def mkHttpBinary(encoding:String = "utf-8") : Array[Byte] = {
     (firstLine + "\r\n" +
-      headers.map(EntityUtils.header2String).mkString("\r\n") +
+      headers.map(RequestUtils.header2String).mkString("\r\n") +
       "\r\n"*2)
       .getBytes(encoding) ++ body
   }
 
   override def mkHttpString(encoding:String = "utf-8") = {
     firstLine + "\r\n" +
-      headers.map(EntityUtils.header2String).mkString("\r\n") +
+      headers.map(RequestUtils.header2String).mkString("\r\n") +
       "\r\n"*2 +
       new String(body,encoding)
   }

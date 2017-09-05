@@ -3,7 +3,7 @@ package utils
 /**
   * Created by linsixin on 2017/8/19.
   */
-object EntityUtils {
+object RequestUtils {
 
   /**
     * transform nameValue pair to http request header string

@@ -2,7 +2,7 @@ package entity
 
 import org.apache.http.client.methods.HttpGet
 import org.scalatest.FunSuite
-import utils.http.{FileUtils, HexUtils, HttpUtils, IOUtils}
+import utils.{HexUtils, HttpUtils}
 
 /**
   * Created by linsixin on 2017/8/28.

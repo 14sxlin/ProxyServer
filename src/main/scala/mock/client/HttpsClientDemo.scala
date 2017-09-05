@@ -2,7 +2,7 @@ package mock.client
 
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClients
-import utils.http.HttpUtils
+import utils.HttpUtils
 
 /**
   * Created by sparr on 2017/8/20.

@@ -1,4 +1,4 @@
-package utils.http
+package utils
 
 import java.io.InputStream
 

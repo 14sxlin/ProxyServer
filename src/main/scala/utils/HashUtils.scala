@@ -1,4 +1,4 @@
-package utils.http
+package utils
 
 import connection.ClientConnection
 import entity.request.HeaderRecognizedRequest

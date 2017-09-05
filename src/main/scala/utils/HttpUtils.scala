@@ -1,4 +1,4 @@
-package utils.http
+package utils
 
 import entity.response.{BinaryResponse, TextResponse}
 import org.apache.commons.lang3.StringUtils

@@ -1,4 +1,4 @@
-package utils.http
+package utils
 
 /**
   * Created by sparr on 2017/8/22.

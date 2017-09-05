@@ -13,7 +13,7 @@ import org.apache.http.impl.client.HttpClients
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager
 import org.apache.http.util.EntityUtils
 import org.slf4j.LoggerFactory
-import utils.http.IOUtils
+import utils.IOUtils
 
 /**
   * Created by linsixin on 2017/8/25.

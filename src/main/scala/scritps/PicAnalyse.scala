@@ -2,7 +2,7 @@ package scritps
 
 import java.io.{File, FileInputStream, FileOutputStream}
 
-import utils.http.{FileUtils, HexUtils}
+import utils.{FileUtils, HexUtils}
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer

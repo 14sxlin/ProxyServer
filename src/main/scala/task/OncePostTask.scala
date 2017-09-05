@@ -2,7 +2,7 @@ package task
 
 import entity.response.TextResponse
 import org.apache.http.client.methods.HttpUriRequest
-import utils.http.HttpUtils
+import utils.HttpUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
