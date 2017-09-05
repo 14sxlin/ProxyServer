@@ -2,7 +2,7 @@ package connection
 
 import java.util.concurrent.ArrayBlockingQueue
 
-import entity.request.Request
+import entity.request.ByteBodyRequest
 import connection.dispatch.RequestQueue
 import org.apache.http.client.methods.HttpGet
 import org.scalatest.FunSuite

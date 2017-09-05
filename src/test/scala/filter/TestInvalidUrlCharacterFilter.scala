@@ -2,7 +2,7 @@ package filter
 
 import java.net.URLEncoder
 
-import entity.request.Request
+import entity.request.TextRequest
 import filter.request.InvalidUrlCharacterFilter
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClients
@@ -32,7 +32,7 @@ class TestInvalidUrlCharacterFilter extends FunSuite{
 
   test("test filter | "){
     val firstLine = "GET "+uri+" HTTP/1.1"
-    val requestWithInvalidUri  = Request(firstLine,Array.empty,"")
+    val requestWithInvalidUri  = TextRequest(firstLine,Array.empty,"")
     val newRequest = InvalidUrlCharacterFilter.handle(requestWithInvalidUri)
     val encodedUri = uri.replace("|",URLEncoder.encode("|","utf-8"))
     assert(newRequest.uri == encodedUri)

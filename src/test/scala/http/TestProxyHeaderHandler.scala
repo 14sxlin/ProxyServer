@@ -1,6 +1,6 @@
 package http
 
-import entity.request.Request
+import entity.request.TextRequest
 import filter.request.ProxyHeaderFilter
 import org.scalatest.FunSuite
 
@@ -15,7 +15,7 @@ class TestProxyHeaderHandler extends FunSuite{
     ("Host","hasdlf"),
     ("Keep-Alive","lalal")
   )
-  val request1 = Request("", headers1, "")
+  val request1 = TextRequest("", headers1, "")
 
   test("test handle filter one header"){
     val result = ProxyHeaderFilter.handle(request1).headers
@@ -34,7 +34,7 @@ class TestProxyHeaderHandler extends FunSuite{
     ("Keep-Alive","lalal"),
     ("Content","")
   )
-  val request2 = Request("", headers2, "")
+  val request2 = TextRequest("", headers2, "")
   test("test handle filter more header"){
     val result = ProxyHeaderFilter.handle(request2).headers
 

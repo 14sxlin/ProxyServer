@@ -6,7 +6,7 @@ import entity.response.{BinaryResponse, TextResponse}
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.protocol.HttpClientContext
 import org.scalatest.{FunSuite, Ignore}
-import utils.http.HexUtils
+import utils.HexUtils
 
 /**
   * Created by linsixin on 2017/8/25.
