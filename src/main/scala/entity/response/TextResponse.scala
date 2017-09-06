@@ -1,6 +1,6 @@
 package entity.response
 
-import entity.request.EntityUtils.header2String
+import utils.RequestUtils.header2String
 
 /**
   * Created by linsixin on 2017/8/12.
