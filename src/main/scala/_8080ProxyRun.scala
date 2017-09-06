@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory
 /**
   * Created by linsixin on 2017/8/5.
   */
-object HttpClientRun extends App{
+object _8080ProxyRun extends App{
   val logger = LoggerFactory.getLogger(getClass)
 
 //  val getUri = "http://localhost:8080/LoginDemo/"
@@ -42,7 +42,7 @@ object HttpClientRun extends App{
           val result = httpClient.doGetByProxyWithHttp( proxy, proxyPort, targetURI)
           //val proxyRequest = httpClient.buildProxyRequest(proxy, proxyPort,httpGet)
           //httpClient.doRequestProxyInPool(proxyRequest,requestProxy,httpContext)
-          logger.info(s"receive data length = ${result.length}")
+          logger.info(s"receive request length = ${result.length}")
         }
       }
     }
@@ -56,7 +56,7 @@ object HttpClientRun extends App{
         runAndRetryWhenFail {
           val result = httpClient.doPostByProxyWithHttp(
             proxy,proxyPort,postUrl,params)
-          logger.info(s"receive data length = ${result.length}")
+          logger.info(s"receive request length = ${result.length}")
           Thread.sleep(5000)
         }
     }

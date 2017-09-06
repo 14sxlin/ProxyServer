@@ -1,3 +1,6 @@
+import java.io.File
+import java.security.KeyStore
+
 import org.apache.http.HttpHost
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.config.RegistryBuilder
@@ -11,10 +14,9 @@ import org.apache.http.util.EntityUtils
 /**
   * Created by linsixin on 2017/9/4.
   */
-object HttpsClientRun extends App{
+object _8443ProxyRun extends App{
 
   val context = SSLContexts.custom()
-    //        .loadKeyMaterial("D:/keys/tomcat","123456".toCharArray)
     .build()
   val sslFactory = new SSLConnectionSocketFactory(
     context,
