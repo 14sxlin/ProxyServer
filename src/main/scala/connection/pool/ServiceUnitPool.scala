@@ -1,35 +1,17 @@
-package connection.control
-
-import java.util.concurrent.ConcurrentHashMap
+package connection.pool
 
 import connection.ServiceUnit
 
 /**
   * Created by linsixin on 2017/8/11.
   */
-trait ServiceUnitPool[T <: ServiceUnit] {
-
-  protected val map = new ConcurrentHashMap[String, T]()
-
-  def put(key: String, unit: T)
-
-  def get(key: String): Option[T]
-
-  def remove(key:String):Unit = {
-    if(map.containsKey(key)){
-      map.remove(key)
-    }
-  }
+trait ServiceUnitPool[T <: ServiceUnit] extends Pool[T]{
 
   def closeAndRemove(key:String):Unit = {
     if(map.containsKey(key)){
       map.get(key).closeWhenNotActive()
       remove(key)
     }
-  }
-
-  def containsKey(key:String) : Boolean = {
-    map.containsKey(key)
   }
 
   def removeIdleServiceUnit() : Int = {

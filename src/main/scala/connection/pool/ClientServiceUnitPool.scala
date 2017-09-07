@@ -1,9 +1,10 @@
-package connection.control
+package connection.pool
+
 import connection.ClientServiceUnit
 /**
   * Created by linsixin on 2017/8/30.
   */
-class ClientServicePool extends ServiceUnitPool[ClientServiceUnit]{
+class ClientServiceUnitPool extends ServiceUnitPool[ClientServiceUnit]{
 
   override def put(key: String, unit: ClientServiceUnit): Unit = {
     unit.updateActiveTime()
