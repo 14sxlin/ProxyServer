@@ -22,13 +22,13 @@ object SSLServerRun extends App{
 
   val socketIn  = new BufferedInputStream(sslSocket.getInputStream)
   val socketOut = sslSocket.getOutputStream
-  var content = IOUtils.dataFromInputStream(socketIn)
+  var content = IOUtils.dataFromResponseInputStream(socketIn)
   println("first: \n" + new String(content))
   println(HexUtils.toHex(content))
   socketOut.write(HttpUtils.establishConnectInfo.getBytes())
   socketOut.flush()
 
-  content = IOUtils.dataFromInputStream(socketIn) //why messy code again
+  content = IOUtils.dataFromResponseInputStream(socketIn) //why messy code again
   println(s"content :\n" + new String(content))
   println(HexUtils.toHex(content))
 
@@ -38,7 +38,7 @@ object SSLServerRun extends App{
   websiteOut.flush()
 
   val websiteIn = websiteSSLSocket.getInputStream
-  content = IOUtils.dataFromInputStream(socketIn)
+  content = IOUtils.dataFromResponseInputStream(socketIn)
   println(new String(content) + "\n" + content.mkString)
   socketOut.write(content)
 

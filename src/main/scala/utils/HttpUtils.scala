@@ -54,7 +54,7 @@ object HttpUtils {
       entity match {
         case null => Array.emptyByteArray
         case _ =>
-          IOUtils.dataFromInputStream(entity.getContent)
+          IOUtils.dataFromResponseInputStream(entity.getContent)
       }
     )
 

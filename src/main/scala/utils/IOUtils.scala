@@ -10,8 +10,8 @@ import scala.collection.mutable.ArrayBuffer
   */
 object IOUtils {
 
-  def dataFromInputStream(in:InputStream) : Array[Byte]= {
-    val buffer = new Array[Byte](1024)
+  def dataFromResponseInputStream(in:InputStream) : Array[Byte]= {
+    val buffer = new Array[Byte](10240)
     val data = new ArrayBuffer[Byte]()
     @tailrec
     def readIn() : Unit = {

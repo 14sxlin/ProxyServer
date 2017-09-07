@@ -1,4 +1,4 @@
-import java.net.SocketException
+import java.net.{Socket, SocketException, SocketTimeoutException}
 import java.util.concurrent.ArrayBlockingQueue
 
 import connection._
@@ -98,26 +98,22 @@ object HttpProxyServerRun2 extends App {
         client.closeAllResource()
       case request: TotalEncryptRequest => //ssl
         logger.warn(s"${LoggerMark.process} total encrypt request")
-
+        throw new Exception("unable to process")
       case request:HeaderRecognizedRequest if request.method =="CONNECT" =>
         val uri = request.uri
         val host = uri.split(":").head.trim
         val port = uri.split(":").last.trim.toInt
         val establishInfo = HttpUtils.establishConnectInfo
-        client.writeTextData(establishInfo)
-//        authenticate = false
-        response443AndStartCommunicate(client,host,port)
-//        logger.info(s"${LoggerMark.resource} not to process, close resource")
-//        client.closeAllResource()
+        client.writeBinaryData(establishInfo.getBytes())
+        start433Communicate(client,host,port)
       case request : HeaderRecognizedRequest => //post get
         val hash = HashUtils.getHash(client,request)
         processGetOrPostRequest(hash,request,client)
-        Thread.`yield`()
         @tailrec
         def readRemainingRequest() : Unit = {
           val newRequest = readAndParseToRequest(client)
           if(newRequest != EmptyRequest){
-            processGetOrPostRequest(hash, //todo this asInstance is dangerous
+            processGetOrPostRequest(hash, //TODO this asInstance is dangerous
               newRequest.asInstanceOf[HeaderRecognizedRequest],client)
             readRemainingRequest()
           }else{
@@ -132,16 +128,24 @@ object HttpProxyServerRun2 extends App {
   }
 
   def readAndParseToRequest(client: ClientConnection):Request = {
-    client.readBinaryData() match {
-      case Some(rawRequest) =>
-        logger.info(s"${LoggerMark.up} raw in String: \n" + new String(rawRequest))
-        RequestFactory.buildRequest(rawRequest) match {
-          case r : TotalEncryptRequest => r
-          case r : HeaderRecognizedRequest =>
-            RequestFilterChain.handle(r)
-        }
-      case None =>
-        //todo should close resource here
+    //todo catch readTimeout exception
+    try{
+      client.readBinaryData() match {
+        case Some(rawRequest) =>
+          logger.info(s"${LoggerMark.up} raw in String: \n" + new String(rawRequest))
+          RequestFactory.buildRequest(rawRequest) match {
+            case r : TotalEncryptRequest => r
+            case r : HeaderRecognizedRequest =>
+              RequestFilterChain.handle(r)
+          }
+        case None =>
+          //todo should close resource here
+          EmptyRequest
+      }
+    }catch {
+      case _:SocketTimeoutException =>
+        logger.info(s"${LoggerMark.process} read timeout..ready to close resource ")
+//        client.closeAllResource()
         EmptyRequest
     }
 
@@ -183,21 +187,15 @@ object HttpProxyServerRun2 extends App {
 
 
   var authenticate = true
-  def response443AndStartCommunicate(client: ClientConnection, host:String, port:Int): Unit = {
+  def start433Communicate(client: ClientConnection, host:String, port:Int): Unit = {
     if(authenticate) {
-      val communicateRun = new Runnable {
-        override def run(): Unit = {
-          val serverCon = new ServerConnection(host,port)
-          serverCon.openConnection()
-          val transfer = new DataTransfer(client,serverCon)
-          transfer.communicate()
-        }
-      }
-      val communicateThread = new Thread(communicateRun)
-      communicateThread.setName("Communication-Thread")
-      communicateThread.start()
-//      serverCon.closeWhenNotActiveIn(5000L)
-//      client.closeWhenNotActiveIn(5000L)
+      logger.info(s"${LoggerMark.resource} create new transfer($host:$port) to communicate")
+      val serverSocket = new Socket(host,port)
+      val serverCon = ServerConnection(serverSocket)
+      serverCon.openConnection()
+      val transfer = new DataTransfer(client,serverCon)
+      transfer.startCommunicate()
+      //todo when to close transfer
     }else{
       client.writeTextData(HttpUtils.unauthenicationInfo)
       client.closeAllResource()

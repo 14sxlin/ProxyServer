@@ -83,7 +83,7 @@ class HttpClientMock {
       logger.info("{}",header)
 
     val entity = response.getEntity
-    val content = IOUtils.dataFromInputStream(entity.getContent)
+    val content = IOUtils.dataFromResponseInputStream(entity.getContent)
 //    FileUtils.save2File("logs/test.jpg",content)
 //    response.close()
 //    client.close()
