@@ -23,4 +23,8 @@ class RequestProxy(private val connectionPoolingClient: ConnectionPoolingClient)
     connectionPoolingClient.doRequest(request,context)
   }
 
+  def closeIdleConnection(time:Int): Unit ={
+    connectionPoolingClient.closeIdleConnection(time)
+  }
+
 }

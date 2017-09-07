@@ -2,7 +2,7 @@ package connection.dispatch
 
 import java.util.concurrent.ArrayBlockingQueue
 
-import connection.control.ClientServicePool
+import connection.pool.ClientServiceUnitPool
 import constants.LoggerMark
 import entity.request.RequestUnit
 import http.RequestProxy
@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory
 /**
   * Created by linsixin on 2017/8/25.
   */
-class RequestConsumeThread(conPool:ClientServicePool,
+class RequestConsumeThread(conPool:ClientServiceUnitPool,
                            requestQueue: ArrayBlockingQueue[RequestUnit],
                            requestProxy: RequestProxy) extends Thread {
 
@@ -34,6 +34,7 @@ class RequestConsumeThread(conPool:ClientServicePool,
             conPool.closeAndRemove(key)
           }
         }
+        requestProxy.closeIdleConnection(10)
       }catch{
         case e:Exception =>
           onFail(e)
