@@ -2,7 +2,7 @@ package http
 
 import java.util.concurrent.TimeUnit
 
-import constants.{ConnectionConstants, LoggerMark}
+import constants.{ConnectionConstants, LoggerMark, Timeout}
 import entity.response.{BinaryResponse, Response, TextResponse}
 import org.apache.commons.lang3.StringUtils
 import org.apache.http.HttpHeaders
@@ -28,7 +28,7 @@ class ConnectionPoolingClient {
     RequestConfig.custom()
         .setConnectionRequestTimeout(connectionRequestTimeout)
         .setConnectTimeout(connectTimeout)
-        .setSocketTimeout(socketTimeout)
+        .setSocketTimeout(readTimeout)
         .build()
   cm.setMaxTotal(ConnectionConstants.maxConnection)
   private val client =

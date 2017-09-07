@@ -1,9 +1,10 @@
 package connection
 
+import java.io.{BufferedInputStream, BufferedOutputStream}
 import java.net.Socket
 
 import connection.control.ActiveControl
-import constants.ConnectionConstants
+import constants.{ConnectionConstants, Timeout}
 
 /**
   * Created by linsixin on 2017/8/20.
@@ -17,6 +18,13 @@ case class ServerConnection(socket: Socket) extends ActiveControl with Connectio
 
 //  override protected val resourceName = s"Server Socket"
 
+  /**
+    * auto create a new socket
+    * but unable to set connection
+    * timeout
+    * @param host host
+    * @param port port
+    */
   def this(host:String,port:Int) = {
     this(new Socket(host,port))
   }
@@ -24,8 +32,9 @@ case class ServerConnection(socket: Socket) extends ActiveControl with Connectio
   override def openConnection(): Unit = {
     if(connectionOpen)
       return
-    out = socket.getOutputStream
-    in = socket.getInputStream
+    socket.setSoTimeout(Timeout.readTimeout)
+    out = new BufferedOutputStream(socket.getOutputStream)
+    in = new BufferedInputStream(socket.getInputStream)
     super.openConnection()
   }
 

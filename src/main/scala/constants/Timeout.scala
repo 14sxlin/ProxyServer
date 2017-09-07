@@ -11,9 +11,9 @@ object Timeout {
   /**
     * connect to socket time out
     */
-  val connectTimeout = 2000
+  val connectTimeout = 5000
   /**
     * read data from socket time out
     */
-  val socketTimeout = 3000
+  val readTimeout = 10000
 }

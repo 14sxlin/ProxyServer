@@ -1,9 +1,10 @@
 package connection
 
+import java.io.{BufferedInputStream, BufferedOutputStream}
 import java.net.Socket
 
 import connection.control.ActiveControl
-import constants.ConnectionConstants
+import constants.{ConnectionConstants, Timeout}
 
 
 /**
@@ -21,8 +22,9 @@ class ClientConnection(val socket: Socket) extends ActiveControl with Connection
   override def openConnection(): Unit = {
     if(connectionOpen)
       return
-    out = socket.getOutputStream
-    in = socket.getInputStream
+    socket.setSoTimeout(Timeout.readTimeout)
+    out = new BufferedOutputStream(socket.getOutputStream)
+    in = new BufferedInputStream(socket.getInputStream)
     super.openConnection()
   }
 

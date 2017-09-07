@@ -2,6 +2,9 @@ package connection
 
 import java.io.{InputStream, OutputStream}
 
+import constants.LoggerMark
+import org.slf4j.LoggerFactory
+
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 
@@ -14,13 +17,17 @@ import scala.collection.mutable.ArrayBuffer
   */
 trait Connection {
 
+  private val logger = LoggerFactory.getLogger(getClass)
+
+
   protected var out: OutputStream = _
   protected var in: InputStream = _
   var connectionOpen = false
 
   /**
-    * Init inputstream and outputstream
+    * Init input stream and output stream
     * and set open connectionOpen true
+    * remember to setSoTimeOut
     */
   def openConnection():Unit = {
     connectionOpen = true
@@ -35,7 +42,7 @@ trait Connection {
     checkConnectionOpen()
     val total = ArrayBuffer[Byte]()
     var totalLen = 0
-    val buffer = new Array[Byte](1024)
+    val buffer = new Array[Byte](10240)
 
     @tailrec
     def readUntilBufferNotFull():Unit = {
@@ -76,10 +83,15 @@ trait Connection {
     writeBinaryData(data.getBytes(encoding))
   }
 
-  private def checkConnectionOpen(): Unit = {
+  def checkConnectionOpen(): Unit = {
     if(!connectionOpen)
       throw new IllegalStateException("connection not open")
   }
+
+
+  def getInputStream : InputStream = in
+
+  def getOutputStream : OutputStream = out
 
   def closeAllResource():Unit = {
     out.close()
