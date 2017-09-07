@@ -2,8 +2,8 @@ import java.net.{Socket, SocketException, SocketTimeoutException}
 import java.util.concurrent.ArrayBlockingQueue
 
 import connection._
-import connection.control.ClientServicePool
 import connection.dispatch.{ClientRequestDispatcher, RequestConsumeThread}
+import connection.pool.{ClientServiceUnitPool, ServerConnectionPool}
 import constants.{ConnectionConstants, LoggerMark, Timeout}
 import entity.request._
 import entity.request.adapt.{NoneBodyRequestAdapter, RequestAdapter, RequestWithBodyAdapter}
@@ -24,14 +24,17 @@ object HttpProxyServerRun2 extends App {
   val logger = LoggerFactory.getLogger(getClass)
   val port = 689
 
-  val connectionPoolingClient = new ConnectionPoolingClient
-  val requestProxy = new RequestProxy(connectionPoolingClient)
+
   val requestQueue = new ArrayBlockingQueue[RequestUnit](ConnectionConstants.maxConnection)
 
-  val clientPool = new ClientServicePool
+  val clientPool = new ClientServiceUnitPool
   val requestDispatcher = new ClientRequestDispatcher(clientPool)
 
+  val serverConPool = new ServerConnectionPool[ServerConnection]()
+
   for( i <- 1 to 3){
+    val connectionPoolingClient = new ConnectionPoolingClient
+    val requestProxy = new RequestProxy(connectionPoolingClient)
     val requestConsumeThread = new RequestConsumeThread(clientPool,requestQueue,requestProxy)
     requestConsumeThread.setName(s"Request-Consume-Thread$i")
     requestConsumeThread.setDaemon(true)
@@ -60,7 +63,6 @@ object HttpProxyServerRun2 extends App {
   def begin(): Unit = {
     val receiver = ConnectionReceiver(port)
     val clientConnection = receiver.accept()
-
     clientConnection.openConnection()
 
     val processRun = new Runnable {
@@ -82,7 +84,7 @@ object HttpProxyServerRun2 extends App {
     logger.info(s"${LoggerMark.resource} process-active-count: ${runGroup.activeCount()}")
   }
 
-  // maybe this can make a conform api
+  // todo maybe this can make a conform api
   private def startNewThreadToProcess(client: ClientConnection):Unit = {
     val request = readAndParseToRequest(client)
     request match {
@@ -158,14 +160,14 @@ object HttpProxyServerRun2 extends App {
       logger.info(s"${LoggerMark.resource} Already have a ClientServiceUnit $hash, rest ${requestQueue.size()}")
       val requestUnit = requestDispatcher.buildRequestUnit(hash,httpUriRequest)
       requestQueue.put(requestUnit)
-      connectionPoolingClient.closeIdleConnection(ConnectionConstants.idleThreshold.toInt)
+//      connectionPoolingClient.closeIdleConnection(ConnectionConstants.idleThreshold.toInt)
     }else{
       logger.info(s"${LoggerMark.resource} Create a new ClientServiceUnit $hash, rest ${requestQueue.size()}")
       val serviceUnit = new ClientServiceUnit(clientConnection,HttpClientContext.create())
       requestDispatcher.addNewServiceUnit(hash,serviceUnit)
       val requestUnit = requestDispatcher.buildRequestUnit(hash,httpUriRequest)
       requestQueue.put(requestUnit)
-      connectionPoolingClient.closeIdleConnection(ConnectionConstants.idleThreshold.toInt)
+//      connectionPoolingClient.closeIdleConnection(ConnectionConstants.idleThreshold.toInt)
     }
   }
 
@@ -173,9 +175,10 @@ object HttpProxyServerRun2 extends App {
   var authenticate = true
   def start433Communicate(client: ClientConnection, host:String, port:Int): Unit = {
     if(authenticate) {
-      logger.info(s"${LoggerMark.resource} create new transfer($host:$port) to communicate")
+      client.setReadTimeout(Timeout._443ReadTimeout)
       val serverSocket = new Socket(host,port)
-      val serverCon = ServerConnection(serverSocket)
+      val serverCon = new ServerConnection(serverSocket,s"$host:$port")
+      client.setReadTimeout(Timeout._443ReadTimeout)
       serverCon.openConnection()
       val transfer = new DataTransfer(client,serverCon)
       transfer.startCommunicate()
