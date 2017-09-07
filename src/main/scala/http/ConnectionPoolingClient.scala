@@ -39,23 +39,30 @@ class ConnectionPoolingClient {
 
 
   def doRequest(request:HttpUriRequest,
-                context: HttpClientContext,
-                encoding:String = "utf8") : Response = {
+                context: HttpClientContext) : Response = {
     val httpResponse = client.execute(request,context)
-    logger.info(s"${LoggerMark.down} successfully get response")
     val entity = httpResponse.getEntity
     val headers = httpResponse.getAllHeaders.map(h => (h.getName, h.getValue))
 
     var response :Response = null
     if(isTextEntity(headers)) {
-      logger.info(s"${LoggerMark.process} Text Entity Response")
+      var charset = "utf8"
+      headers.find(nameValue => {
+        nameValue._1 == HttpHeaders.CONTENT_TYPE
+      }) match {
+        case None =>
+        case Some((_,contentType)) =>
+          charset = StringUtils.substringAfter(contentType,"charset=")
+          if(charset.isEmpty)
+            charset = "utf8"
+      }
       response =
         TextResponse(
           httpResponse.getStatusLine.toString,
           headers,
           entity match {
             case null => StringUtils.EMPTY
-            case _ => EntityUtils.toString(entity, encoding).trim
+            case _ => EntityUtils.toString(entity,charset).trim
           }
         )
     }
