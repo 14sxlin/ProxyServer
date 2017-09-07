@@ -26,7 +26,6 @@ class RequestConsumeThread(conPool:ClientServicePool,
       logger.info(s"${LoggerMark.process} begin to take request")
       try {
         val requestUnit = requestQueue.take()
-        logger.info("take 1 request,rest size :"+requestQueue.size())
         val response = requestProxy.doRequest(requestUnit.request,requestUnit.context)
         requestUnit.onSuccess(response)
         val key =requestUnit.key
@@ -37,7 +36,6 @@ class RequestConsumeThread(conPool:ClientServicePool,
         }
       }catch{
         case e:Exception =>
-          logger.warn(s"fail in $getName : ${e.getMessage}")
           onFail(e)
       }
     }

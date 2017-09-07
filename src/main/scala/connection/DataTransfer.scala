@@ -30,11 +30,9 @@ class DataTransfer(client: ClientConnection,
     checkIfConnectionOpen()
     client.readBinaryData() match {
       case Some(data) =>
-        logger.info(s"tran length = ${data.length}")
         server.writeBinaryData(data)
         data.length
       case None =>
-        logger.warn("try to transfer empty from server to client")
         throw new SocketException("client has nothing to read")
     }
 
@@ -97,8 +95,8 @@ class DataTransfer(client: ClientConnection,
         }
       }
     })
-    clientToServerThread.setName("Client2Server")
-    serverToClientThread.setName("Server2Client")
+    clientToServerThread.setName(s"${server.socket.getInetAddress} <?>")
+    serverToClientThread.setName(s"${server.socket.getInetAddress} <!>")
     clientToServerThread.start()
     serverToClientThread.start()
   }

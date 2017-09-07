@@ -4,11 +4,12 @@ import java.util.concurrent.ArrayBlockingQueue
 import connection._
 import connection.control.ClientServicePool
 import connection.dispatch.{ClientRequestDispatcher, RequestConsumeThread}
-import constants.{ConnectionConstants, LoggerMark}
+import constants.{ConnectionConstants, LoggerMark, Timeout}
 import entity.request._
 import entity.request.adapt.{NoneBodyRequestAdapter, RequestAdapter, RequestWithBodyAdapter}
 import filter.RequestFilterChain
 import http.{ConnectionPoolingClient, RequestProxy}
+import org.apache.commons.lang3.StringUtils
 import org.apache.http.client.protocol.HttpClientContext
 import org.slf4j.LoggerFactory
 import utils.{HashUtils, HttpUtils}
@@ -30,21 +31,13 @@ object HttpProxyServerRun2 extends App {
   val clientPool = new ClientServicePool
   val requestDispatcher = new ClientRequestDispatcher(clientPool)
 
-  val requestConsumeThread1 = new RequestConsumeThread(clientPool,requestQueue,requestProxy)
-  requestConsumeThread1.setName("Request-Consume-Thread1")
-  requestConsumeThread1.setDaemon(true)
-  requestConsumeThread1.setPriority(10)
-  requestConsumeThread1.start()
-  val requestConsumeThread2 = new RequestConsumeThread(clientPool,requestQueue,requestProxy)
-  requestConsumeThread2.setName("Request-Consume-Thread2")
-  requestConsumeThread2.setPriority(10)
-  requestConsumeThread2.start()
-  val requestConsumeThread3 = new RequestConsumeThread(clientPool,requestQueue,requestProxy)
-  requestConsumeThread3.setName("Request-Consume-Thread3")
-  requestConsumeThread3.setPriority(10)
-  requestConsumeThread3.start()
-
-
+  for( i <- 1 to 3){
+    val requestConsumeThread = new RequestConsumeThread(clientPool,requestQueue,requestProxy)
+    requestConsumeThread.setName(s"Request-Consume-Thread$i")
+    requestConsumeThread.setDaemon(true)
+    requestConsumeThread.setPriority(10)
+    requestConsumeThread.start()
+  }
 
 
 //  val clientServiceGCThread = new IdleServiceGCThread[ClientServiceUnit](clientPool)
@@ -62,7 +55,7 @@ object HttpProxyServerRun2 extends App {
   t.setName("Socket-Accept-Thread")
   t.start()
 
-  val runGroup = new ThreadGroup("process-theads")
+  val runGroup = new ThreadGroup("Process-Theads")
 
   def begin(): Unit = {
     val receiver = ConnectionReceiver(port)
@@ -96,8 +89,7 @@ object HttpProxyServerRun2 extends App {
       case EmptyRequest => //return
         logger.warn(s"${LoggerMark.resource} empty request..close socket")
         client.closeAllResource()
-      case request: TotalEncryptRequest => //ssl
-        logger.warn(s"${LoggerMark.process} total encrypt request")
+      case _: TotalEncryptRequest => //ssl
         throw new Exception("unable to process")
       case request:HeaderRecognizedRequest if request.method =="CONNECT" =>
         val uri = request.uri
@@ -132,20 +124,18 @@ object HttpProxyServerRun2 extends App {
     try{
       client.readBinaryData() match {
         case Some(rawRequest) =>
-          logger.info(s"${LoggerMark.up} raw in String: \n" + new String(rawRequest))
+          logger.info(s"${LoggerMark.up} raw in String: \n" +
+            StringUtils.substringBefore(new String(rawRequest),"\n"))
           RequestFactory.buildRequest(rawRequest) match {
             case r : TotalEncryptRequest => r
             case r : HeaderRecognizedRequest =>
               RequestFilterChain.handle(r)
           }
-        case None =>
-          //todo should close resource here
-          EmptyRequest
+        case None => EmptyRequest
       }
     }catch {
       case _:SocketTimeoutException =>
         logger.info(s"${LoggerMark.process} read timeout..ready to close resource ")
-//        client.closeAllResource()
         EmptyRequest
     }
 
@@ -161,27 +151,21 @@ object HttpProxyServerRun2 extends App {
         adapter = NoneBodyRequestAdapter
       case _ =>
         adapter = RequestWithBodyAdapter
-//      case _ =>
-//        logger.error("unable to process :" + request.mkHttpStringOfFirstLineAndHeaders)
-//        throw new MatchError("unable to process " + request.mkHttpStringOfFirstLineAndHeaders)
     } // great can assign object to variable
+
     val httpUriRequest = adapter.adapt(request)
     if(requestDispatcher.containsKey(hash)){
       logger.info(s"${LoggerMark.resource} Already have a ClientServiceUnit $hash, rest ${requestQueue.size()}")
       val requestUnit = requestDispatcher.buildRequestUnit(hash,httpUriRequest)
-      logger.info(s"${LoggerMark.process} put new request")
       requestQueue.put(requestUnit)
-      connectionPoolingClient.closeIdleConnection(2)
+      connectionPoolingClient.closeIdleConnection(ConnectionConstants.idleThreshold.toInt)
     }else{
       logger.info(s"${LoggerMark.resource} Create a new ClientServiceUnit $hash, rest ${requestQueue.size()}")
       val serviceUnit = new ClientServiceUnit(clientConnection,HttpClientContext.create())
       requestDispatcher.addNewServiceUnit(hash,serviceUnit)
       val requestUnit = requestDispatcher.buildRequestUnit(hash,httpUriRequest)
-      logger.info(s"${LoggerMark.process} put new request")
       requestQueue.put(requestUnit)
-      logger.info(s"${LoggerMark.resource} queue size = ${requestQueue.size()}")
-      connectionPoolingClient.closeIdleConnection(2)
-
+      connectionPoolingClient.closeIdleConnection(ConnectionConstants.idleThreshold.toInt)
     }
   }
 
