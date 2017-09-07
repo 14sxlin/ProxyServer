@@ -1,7 +1,7 @@
 package connection.dispatch
 
 import connection.ClientServiceUnit
-import connection.control.ClientServicePool
+import connection.pool.ClientServiceUnitPool
 import entity.request.RequestUnit
 import org.apache.http.client.methods.HttpUriRequest
 import org.slf4j.LoggerFactory
@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory
 /**
   * Created by linsixin on 2017/8/25.
   */
-class ClientRequestDispatcher(pool:ClientServicePool) {
+class ClientRequestDispatcher(pool:ClientServiceUnitPool) {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
@@ -40,7 +40,7 @@ class ClientRequestDispatcher(pool:ClientServicePool) {
           key,
           request,
           serviceUnit.context,
-          ClientServiceUnit.writeResponse(serviceUnit.clientConnection)
+          ClientServiceUnit.onSuccess(serviceUnit.clientConnection)
         )
     }
 

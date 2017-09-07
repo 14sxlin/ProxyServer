@@ -16,4 +16,10 @@ object Timeout {
     * read data from socket time out
     */
   val readTimeout = 10000
+
+  /**
+    * read data from socket connection
+    * for 443
+    */
+  val _443ReadTimeout = 30000
 }
