@@ -32,7 +32,6 @@ object _8443SimpleProxy extends App{
       var length = 0
       while(length != -1){
         length = socketIn.read(buffer)
-        println(s"request >>>>>>>>>> $length")
         websiteOut.write(buffer.slice(0,length))
       }
     }
@@ -46,7 +45,7 @@ object _8443SimpleProxy extends App{
       var length = 0
       while(length != -1){
         length = websiteIn.read(buffer)
-        println(s"response <<<<<<<<< $length")
+        println("response <<<<<<<<< $le")
         socketOut.write(buffer.slice(0,length))
       }
     }
@@ -54,7 +53,7 @@ object _8443SimpleProxy extends App{
 
 
   def readRequestFromClient() = {
-    val content = IOUtils.dataFromInputStream(socketIn)
+    val content = IOUtils.dataFromResponseInputStream(socketIn)
     println("request: " + new String(content))
     println(HexUtils.toHex(content))
     content
@@ -79,7 +78,7 @@ object _8443SimpleProxy extends App{
     websiteOut.flush()
 
     val websiteIn = new BufferedInputStream(httpsConnection.getInputStream)
-    val response = IOUtils.dataFromInputStream(socketIn)
+    val response = IOUtils.dataFromResponseInputStream(socketIn)
     println(new String(response) + "\n" + response.mkString)
     socketOut.write(response)
     socketOut.flush()

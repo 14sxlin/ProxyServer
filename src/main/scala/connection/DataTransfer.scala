@@ -1,6 +1,7 @@
 package connection
 
-import java.net.SocketException
+import java.io.{BufferedInputStream, BufferedOutputStream}
+import java.net.{SocketException, SocketTimeoutException}
 
 import constants.LoggerMark
 import org.slf4j.LoggerFactory
@@ -13,7 +14,9 @@ import org.slf4j.LoggerFactory
 class DataTransfer(client: ClientConnection,
                    server: ServerConnection) {
 
-  private val logger = LoggerFactory.getLogger(getClass)
+  private val logger =
+    LoggerFactory.getLogger(s"${server.socket.getInetAddress}" +
+      s":${server.socket.getPort}")
   /**
     * Read data from client and transfer to
     * server. It may block while reading data
@@ -58,25 +61,51 @@ class DataTransfer(client: ClientConnection,
   }
 
   /**
-    * This method should be block method.
-    * It will allow other to decide whether
-    * it should run in a thread or not.
+    * This method will start two thread which
+    * respectively listens input stream of
+    * server and client connection.Once there
+    * are some data,they will transfer to other
+    * connection directly.
     */
-  def communicate(): Unit = {
+  def startCommunicate(): Unit = {
     checkIfConnectionOpen()
-    tryMaybeSocketClosed{
-      while(true){
-        val toServerSize = transOnceFromClientToServer()
-        logger.info(s"${LoggerMark.up} length: $toServerSize")
-        val toClientSize = transOnceFromServerToClient()
-        logger.info(s"${LoggerMark.down} length: $toClientSize")
+    val cIn = new BufferedInputStream(client.getInputStream)
+    val cOut = new BufferedOutputStream(client.getOutputStream)
+    val sIn = new BufferedInputStream(server.getInputStream)
+    val sOut = new BufferedOutputStream(server.getOutputStream)
+    val clientToServerThread = new Thread(new Runnable {
+      override def run(): Unit = tryMaybeSocketClosed{
+        val buffer = new Array[Byte](2048)
+        var length = 0
+        while(length != -1){
+          length = cIn.read(buffer)
+          logger.info(s"${LoggerMark.up} $length")
+          sOut.write(buffer.slice(0,length))
+          sOut.flush()
+        }
       }
-    }
+    })
+    val serverToClientThread = new Thread(new Runnable {
+      override def run(): Unit = tryMaybeSocketClosed{
+        val buffer = new Array[Byte](2048)
+        var length = 0
+        while(length != -1){
+          length = sIn.read(buffer)
+          logger.info(s"${LoggerMark.down} $length")
+          cOut.write(buffer.slice(0,length))
+          cOut.flush()
+        }
+      }
+    })
+    clientToServerThread.setName("Client2Server")
+    serverToClientThread.setName("Server2Client")
+    clientToServerThread.start()
+    serverToClientThread.start()
   }
 
   private def checkIfConnectionOpen(): Unit = {
-    if(!(client.connectionOpen && server.connectionOpen))
-      throw new IllegalStateException("connection not open")
+    client.checkConnectionOpen()
+    server.checkConnectionOpen()
   }
 
   private def tryMaybeSocketClosed(run : => Unit): Unit = {
@@ -84,10 +113,15 @@ class DataTransfer(client: ClientConnection,
       run
     }catch{
       case  e : SocketException =>
-        logger.error(s"${LoggerMark.resource}: ${e.getMessage}... close all sockets")
-        client.closeAllResource()
-        server.closeAllResource()
+        logExceptionMessageAndCloseResources(e)
+      case e : SocketTimeoutException =>
+        logExceptionMessageAndCloseResources(e)
     }
   }
 
+  private def logExceptionMessageAndCloseResources(e:Exception):Unit = {
+    logger.error(s"${LoggerMark.resource}: ${e.getMessage}... close all sockets")
+    client.closeAllResource()
+    server.closeAllResource()
+  }
 }

@@ -23,7 +23,7 @@ object _8080Run extends App{
     println("read response")
 
     val websiteIn = new BufferedInputStream(websiteSSLSocket.getInputStream)
-    val content = IOUtils.dataFromInputStream(websiteIn)
+    val content = IOUtils.dataFromResponseInputStream(websiteIn)
     println(new String(content))
 
     websiteIn.close()
@@ -36,7 +36,7 @@ object _8080Run extends App{
     val httpURLConnection = url.openConnection().asInstanceOf[HttpURLConnection]
     httpURLConnection.connect()
     val in = new BufferedInputStream(httpURLConnection.getInputStream)
-    val content = IOUtils.dataFromInputStream(in)
+    val content = IOUtils.dataFromResponseInputStream(in)
     println(s"response :\n ${new String(content)}")
 
     in.close()

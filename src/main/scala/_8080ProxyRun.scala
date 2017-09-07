@@ -19,6 +19,7 @@ object _8080ProxyRun extends App{
   val httpClient = new HttpClientMock
   val postUrl = "http://localhost:8080/LoginDemo/LoginDemo/login.do"
   val getUrl = "http://localhost:8080/LoginDemo/load?time=4"
+  val imageUrl = "http://localhost:8080/LoginDemo/pic/1.jpg"
 
   def get(url:String) : Thread = {
     val doGet = new Runnable {
@@ -42,7 +43,7 @@ object _8080ProxyRun extends App{
           val result = httpClient.doGetByProxyWithHttp( proxy, proxyPort, targetURI)
           //val proxyRequest = httpClient.buildProxyRequest(proxy, proxyPort,httpGet)
           //httpClient.doRequestProxyInPool(proxyRequest,requestProxy,httpContext)
-          logger.info(s"receive request length = ${result.length}")
+          logger.info(s"receive response length = ${result.length}")
         }
       }
     }
@@ -75,7 +76,7 @@ object _8080ProxyRun extends App{
   }
 
   def runForTimes(time:Int)(run: => Unit): Unit ={
-    for( _ <- 0 to time){
+    for( _ <- 0 until time){
       run
     }
   }
@@ -86,10 +87,8 @@ object _8080ProxyRun extends App{
     println(result.substring(0,min))
   }
 
-  runForTimes(1){
-    val t2 = doGetByProxyThread(getUrl,onSuccess);t2.start()
-    t2.join()
-  }
+  val t2 = doGetByProxyThread(imageUrl,onSuccess);t2.start()
+  t2.join()
 
 //  Thread.sleep(6000)
 

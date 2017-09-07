@@ -25,7 +25,7 @@ object _8443Run extends App {
 
     val websiteIn = new BufferedInputStream(websiteSSLSocket.getInputStream)
 
-    val content = IOUtils.dataFromInputStream(websiteIn)
+    val content = IOUtils.dataFromResponseInputStream(websiteIn)
     println(new String(content))
 
     websiteSSLSocket.close()
@@ -39,7 +39,7 @@ object _8443Run extends App {
     httpsConnection.setReadTimeout(2000)
     httpsConnection.connect()
     val in = new BufferedInputStream(httpsConnection.getInputStream)
-    val content = IOUtils.dataFromInputStream(in)
+    val content = IOUtils.dataFromResponseInputStream(in)
     println(s"response :\n ${new String(content)}")
     in.close()
     httpsConnection.disconnect()
