@@ -26,15 +26,16 @@ case class ClientServiceUnit(clientConnection: ClientConnection,
 object ClientServiceUnit{
   private val logger = LoggerFactory.getLogger(getClass)
 
-  def writeResponse(client:ClientConnection,
-                    responseFilterChain: ResponseFilterChain.type
+  def onSuccess(client:ClientConnection,
+                responseFilterChain: ResponseFilterChain.type
                       = ResponseFilterChain ) : Response => Unit = {
     response =>
       val filtedResponse = responseFilterChain.handle(response)
       val data = filtedResponse.mkHttpBinary()
       val content = filtedResponse.mkHttpString()
+      val min = Math.min(content.length,500)
       logger.info(s"${LoggerMark.down} \n" +
-        s"${StringUtils.substringBefore(content,"\n")} " +
+        s"${content.substring(0,min)} \n" +
         s"${data.length} to client")
       client.writeBinaryData(data)
   }

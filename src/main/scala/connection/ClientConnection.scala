@@ -3,8 +3,7 @@ package connection
 import java.io.{BufferedInputStream, BufferedOutputStream}
 import java.net.Socket
 
-import connection.control.ActiveControl
-import constants.{ConnectionConstants, Timeout}
+import constants.Timeout
 
 
 /**
@@ -14,18 +13,25 @@ import constants.{ConnectionConstants, Timeout}
   * socket or sending data to client
   *
   */
-class ClientConnection(val socket: Socket) extends ActiveControl with Connection{
+case class ClientConnection(socket: Socket) extends Connection{
 
+  socket.setSoTimeout(Timeout.readTimeout) // set default timeout
 
-  override val idleThreshold : Long = ConnectionConstants.idleThreshold
+  def this(socket: Socket,name:String) = {
+    this(socket)
+    this.name = name
+  }
 
   override def openConnection(): Unit = {
     if(connectionOpen)
       return
-    socket.setSoTimeout(Timeout.readTimeout)
     out = new BufferedOutputStream(socket.getOutputStream)
     in = new BufferedInputStream(socket.getInputStream)
     super.openConnection()
+  }
+
+  override def setReadTimeout(timeout:Int): Unit ={
+    socket.setSoTimeout(timeout)
   }
 
   private def closeSocket(): Unit = {
@@ -37,7 +43,4 @@ class ClientConnection(val socket: Socket) extends ActiveControl with Connection
     closeSocket()
   }
 
-  override def closeWhenNotActive(): Unit = {
-    closeAllResource()
-  }
 }

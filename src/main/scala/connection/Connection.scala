@@ -2,9 +2,6 @@ package connection
 
 import java.io.{InputStream, OutputStream}
 
-import constants.LoggerMark
-import org.slf4j.LoggerFactory
-
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 
@@ -17,9 +14,7 @@ import scala.collection.mutable.ArrayBuffer
   */
 trait Connection {
 
-  private val logger = LoggerFactory.getLogger(getClass)
-
-
+  var name : String = _
   protected var out: OutputStream = _
   protected var in: InputStream = _
   var connectionOpen = false
@@ -32,6 +27,8 @@ trait Connection {
   def openConnection():Unit = {
     connectionOpen = true
   }
+
+  def setReadTimeout(timeout:Int):Unit
 
   /**
     * read data from socket

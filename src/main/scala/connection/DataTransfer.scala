@@ -11,12 +11,11 @@ import org.slf4j.LoggerFactory
   * DataTransfer due to transfer the data
   * between two endpoints
   */
-class DataTransfer(client: ClientConnection,
-                   server: ServerConnection) {
+class DataTransfer(client: Connection,
+                   server: Connection) {
 
-  private val logger =
-    LoggerFactory.getLogger(s"${server.socket.getInetAddress}" +
-      s":${server.socket.getPort}")
+  private val logger = LoggerFactory.getLogger(getClass)
+
   /**
     * Read data from client and transfer to
     * server. It may block while reading data
@@ -77,7 +76,6 @@ class DataTransfer(client: ClientConnection,
         var length = 0
         while(length != -1){
           length = cIn.read(buffer)
-          logger.info(s"${LoggerMark.up} $length")
           sOut.write(buffer.slice(0,length))
           sOut.flush()
         }
@@ -89,14 +87,14 @@ class DataTransfer(client: ClientConnection,
         var length = 0
         while(length != -1){
           length = sIn.read(buffer)
-          logger.info(s"${LoggerMark.down} $length")
           cOut.write(buffer.slice(0,length))
           cOut.flush()
         }
       }
     })
-    clientToServerThread.setName(s"${server.socket.getInetAddress} <?>")
-    serverToClientThread.setName(s"${server.socket.getInetAddress} <!>")
+    clientToServerThread.setName(s"${client.name} <?>")
+    serverToClientThread.setName(s"${server.name} <!>")
+    logger.info(s"${client.name} -> ${server.name} start communicate")
     clientToServerThread.start()
     serverToClientThread.start()
   }
