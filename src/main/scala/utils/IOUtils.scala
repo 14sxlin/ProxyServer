@@ -10,6 +10,11 @@ import scala.collection.mutable.ArrayBuffer
   */
 object IOUtils {
 
+  /**
+    * use by BinaryResponse
+    * @param in InputStream of http response
+    * @return
+    */
   def dataFromResponseInputStream(in:InputStream) : Array[Byte]= {
     val buffer = new Array[Byte](10240)
     val data = new ArrayBuffer[Byte]()
