@@ -2,7 +2,7 @@ package http
 
 import java.util.concurrent.TimeUnit
 
-import constants.{ConnectionConstants, LoggerMark, Timeout}
+import constants.{ConnectionConstants, LoggerMark}
 import entity.response.{BinaryResponse, Response, TextResponse}
 import org.apache.commons.lang3.StringUtils
 import org.apache.http.HttpHeaders
@@ -45,29 +45,33 @@ class ConnectionPoolingClient {
     val headers = httpResponse.getAllHeaders.map(h => (h.getName, h.getValue))
 
     var response :Response = null
-    if(isTextEntity(headers)) {
+    def getCharset : Option[String] = {
       var charset = "utf8"
       headers.find(nameValue => {
         nameValue._1 == HttpHeaders.CONTENT_TYPE
       }) match {
-        case None =>
+        case None => None
         case Some((_,contentType)) =>
           charset = StringUtils.substringAfter(contentType,"charset=")
           if(charset.isEmpty)
-            charset = "utf8"
+            None
+          else
+            Some(charset)
       }
+    }
+    val charset = getCharset
+    if(isTextEntity(headers) && charset.isDefined) {
       response =
         TextResponse(
           httpResponse.getStatusLine.toString,
           headers,
           entity match {
             case null => StringUtils.EMPTY
-            case _ => EntityUtils.toString(entity,charset).trim
+            case _ => EntityUtils.toString(entity,charset.get).trim
           }
         )
     }
     else {
-      logger.info(s"${LoggerMark.process} Binary Entity Response")
       response =
         BinaryResponse(
           httpResponse.getStatusLine.toString,
