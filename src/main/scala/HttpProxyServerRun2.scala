@@ -91,8 +91,8 @@ object HttpProxyServerRun2 extends App {
       case EmptyRequest => //return
         logger.warn(s"${LoggerMark.resource} empty request..close socket")
         client.closeAllResource()
-      case _: TotalEncryptRequest => //ssl
-        throw new Exception("unable to process")
+      case e: TotalEncryptRequest => //ssl
+        throw new Exception(s"unable to process, ${new String(e.bytes)}")
       case request:HeaderRecognizedRequest if request.method =="CONNECT" =>
         val uri = request.uri
         val host = uri.split(":").head.trim
@@ -103,7 +103,7 @@ object HttpProxyServerRun2 extends App {
       case request : HeaderRecognizedRequest => //post get
         val hash = HashUtils.getHash(client,request)
         processGetOrPostRequest(hash,request,client)
-        @tailrec
+        @tailrec //todo catch read time out
         def readRemainingRequest() : Unit = {
           val newRequest = readAndParseToRequest(client)
           if(newRequest != EmptyRequest){
@@ -112,8 +112,9 @@ object HttpProxyServerRun2 extends App {
             readRemainingRequest()
           }else{
             //TODO maybe should do something
-            logger.info(s"${LoggerMark.process} nothing to read ..close resource ")
-            client.closeAllResource()
+            logger.info(s"${LoggerMark.process} nothing to read ..sleep ")
+            Thread.sleep(1000)
+//            client.closeAllResource()
           }
         }
         readRemainingRequest()
@@ -122,26 +123,17 @@ object HttpProxyServerRun2 extends App {
   }
 
   def readAndParseToRequest(client: ClientConnection):Request = {
-    //todo catch readTimeout exception
-    try{
-      client.readBinaryData() match {
-        case Some(rawRequest) =>
-          logger.info(s"${LoggerMark.up} raw in String: \n" +
-            StringUtils.substringBefore(new String(rawRequest),"\n"))
-          RequestFactory.buildRequest(rawRequest) match {
-            case r : TotalEncryptRequest => r
-            case r : HeaderRecognizedRequest =>
-              RequestFilterChain.handle(r)
-          }
-        case None => EmptyRequest
-      }
-    }catch {
-      case _:SocketTimeoutException =>
-        logger.info(s"${LoggerMark.process} read timeout..ready to close resource ")
-        EmptyRequest
+    client.readBinaryData() match {
+      case Some(rawRequest) =>
+        logger.info(s"${LoggerMark.up} raw in String: \n" +
+          StringUtils.substringBefore(new String(rawRequest),"\n"))
+        RequestFactory.buildRequest(rawRequest) match {
+          case r : TotalEncryptRequest => r
+          case r : HeaderRecognizedRequest =>
+            RequestFilterChain.handle(r)
+        }
+      case None => EmptyRequest
     }
-
-
   }
 
   private def processGetOrPostRequest(hash:String,
@@ -157,12 +149,10 @@ object HttpProxyServerRun2 extends App {
 
     val httpUriRequest = adapter.adapt(request)
     if(requestDispatcher.containsKey(hash)){
-      logger.info(s"${LoggerMark.resource} Already have a ClientServiceUnit $hash, rest ${requestQueue.size()}")
       val requestUnit = requestDispatcher.buildRequestUnit(hash,httpUriRequest)
       requestQueue.put(requestUnit)
 //      connectionPoolingClient.closeIdleConnection(ConnectionConstants.idleThreshold.toInt)
     }else{
-      logger.info(s"${LoggerMark.resource} Create a new ClientServiceUnit $hash, rest ${requestQueue.size()}")
       val serviceUnit = new ClientServiceUnit(clientConnection,HttpClientContext.create())
       requestDispatcher.addNewServiceUnit(hash,serviceUnit)
       val requestUnit = requestDispatcher.buildRequestUnit(hash,httpUriRequest)
