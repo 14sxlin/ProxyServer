@@ -1,8 +1,9 @@
 import entity.response.{BinaryResponse, TextResponse}
+import filter.ResponseFilterChain
 import http.{ConnectionPoolingClient, RequestProxy}
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.protocol.HttpClientContext
-import utils.FileUtils
+import utils.{FileUtils, HttpUtils}
 
 /**
   * Created by linsixin on 2017/9/7.
@@ -16,7 +17,10 @@ object TestFailUrl extends App{
 //    "http://same.chinadaily.com.cn/s?z=chinadaily&c=2321",
 //    "http://same.chinadaily.com.cn/s?z=chinadaily&c=2322",
 //    "http://images.china.cn/images1/ch/2015china/phone.js",
-    "http://g.alicdn.com/browser/uc123_no/0.4.9/index/js/weather.min.js"
+//    "http://g.alicdn.com/browser/uc123_no/0.4.9/index/js/weather.min.js",
+//    "http://g.alicdn.com/browser/uc123_no/0.4.9/index/css/uc.home.pkg.min.css"
+//    "http://g.alicdn.com/pecdn/mlog/agp_heat.min.js?t=209010",
+    "http://www.uc123.com/?f=pcntgrid"
   )
 
   val pool = new ConnectionPoolingClient
@@ -24,14 +28,21 @@ object TestFailUrl extends App{
   val context = HttpClientContext.create()
   var count = 0
   for(url <- failUrls){
-    val response = requestProxy.doRequest(new HttpGet(url),context)
+    val get = new HttpGet(url)
+    val response = requestProxy.doRequest(get,context)
     response match {
       case r : TextResponse =>
-        println(r.mkHttpString())
+        println("text response")
+        println(ResponseFilterChain.handle(r).mkHttpString())
       case r : BinaryResponse =>
-        FileUtils.save2File(s"logs/pic/$count.jpg",r.body)
-        println(r.mkHttpString())
+        println("binary response")
+//        FileUtils.save2File(s"logs/pic/$count.jpg",r.body)
+        println(ResponseFilterChain.handle(r).mkHttpString())
+
     }
+
+//    val response1 = HttpUtils.execute(get)
+//    println(response1.mkHttpString())
     count += 1
   }
 }
