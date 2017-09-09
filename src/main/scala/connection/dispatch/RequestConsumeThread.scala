@@ -23,9 +23,8 @@ class RequestConsumeThread(conPool:ClientServiceUnitPool,
 
   override def run(): Unit = {
     while(true){
-      logger.info(s"${LoggerMark.process} begin to take request")
+      val requestUnit = requestQueue.take()
       try {
-        val requestUnit = requestQueue.take()
         val response = requestProxy.doRequest(requestUnit.request,requestUnit.context)
         requestUnit.onSuccess(response)
         val key =requestUnit.key
@@ -33,10 +32,15 @@ class RequestConsumeThread(conPool:ClientServiceUnitPool,
           if(conPool.containsKey(key)){
             conPool.closeAndRemove(key)
           }
-        }
+    }
         requestProxy.closeIdleConnection(10)
       }catch{
         case e:Exception =>
+          logger.error(s"${requestUnit.key} crash")
+          requestUnit.request.getAllHeaders.foreach{
+            headers =>
+              logger.error(s"${headers.getName} : ${headers.getValue}")
+          }
           onFail(e)
       }
     }

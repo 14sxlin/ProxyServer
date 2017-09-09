@@ -14,7 +14,6 @@ trait ActiveControl {
 
   private var last : Long = System.currentTimeMillis()
 
-  private val logger = LoggerFactory.getLogger(getClass)
   private var hasIdle = false
 
   def closeWhenNotActive():Unit
@@ -26,14 +25,12 @@ trait ActiveControl {
       last = System.currentTimeMillis()
 
     }
-    logger.info(s"active at $last")
   }
 
   def isIdle : Boolean = {
     this.synchronized{
       if(!hasIdle){
         val period = System.currentTimeMillis() - last
-        logger.info(s"${LoggerMark.process} from last : ${period/1000} > ${idleThreshold/1000} ? then idle")
         hasIdle = period > idleThreshold
         hasIdle
       }else hasIdle

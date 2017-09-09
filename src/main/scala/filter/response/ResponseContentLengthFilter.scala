@@ -16,10 +16,13 @@ object ResponseContentLengthFilter extends ResponseFilter{
   override def handle(response: Response): Response = {
     if(response.headers.exists(isContentLengthHeader))
     {
-      if(isContentLengthCorrect(response))
+      val (isCorrect, originalContentLen) = isContentLengthCorrect(response)
+      if(isCorrect)
         response
       else{
-        logger.warn(s"${LoggerMark.process} content-length not conform")
+        logger.warn(s"content length not conform \n" +
+          s"old $originalContentLen: new ${response.getContentLength}")
+        logger.warn(response.mkHttpString())
         altContentLength(response,""+response.getContentLength)
       }
     }
@@ -30,9 +33,9 @@ object ResponseContentLengthFilter extends ResponseFilter{
   private def isContentLengthHeader(nameValue:(String,String)) = {
     nameValue._1 == contentLength
   }
-  private def isContentLengthCorrect(response: Response) = {
+  private def isContentLengthCorrect(response: Response):(Boolean,Int) = {
     val contentLength = response.headers.find(isContentLengthHeader).get._2.toInt
-    contentLength == response.getContentLength
+    (contentLength == response.getContentLength,contentLength)
   }
 
   private def addContentLength(response: Response) = {
