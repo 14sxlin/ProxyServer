@@ -9,17 +9,14 @@ import org.slf4j.LoggerFactory
   */
 case class ConnectionReceiver(port: Int) {
 
-  private val logger = LoggerFactory.getLogger(getClass)
-
-  def accept(): ClientConnection = {
-    logger.info(s"start listening at $port")
-    val serverSocket = new ServerSocket(port)
-    val clientSocket = serverSocket.accept()
-
-    logger.info(s"socket at ${clientSocket.getInetAddress} @ ${clientSocket.getPort}")
-    val clientConnection = ClientConnection(clientSocket)
-    clientConnection.name = s"${clientSocket.getInetAddress}:${clientSocket.getPort}"
-    serverSocket.close()
-    clientConnection
+   def accept(): ClientConnection = {
+    this.synchronized{
+      val serverSocket = new ServerSocket(port)
+      val clientSocket = serverSocket.accept()
+      val clientConnection = ClientConnection(clientSocket)
+      clientConnection.name = s"${clientSocket.getInetAddress}:${clientSocket.getPort}"
+      serverSocket.close()
+      clientConnection
+    }
   }
 }
