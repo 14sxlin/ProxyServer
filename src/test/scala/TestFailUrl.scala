@@ -1,6 +1,6 @@
 import entity.response.{BinaryResponse, TextResponse}
 import filter.ResponseFilterChain
-import http.{ConnectionPoolingClient, RequestProxy}
+import http.{ConnectionPoolClient, RequestProxy}
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.protocol.HttpClientContext
 import utils.{FileUtils, HttpUtils}
@@ -23,7 +23,7 @@ object TestFailUrl extends App{
     "http://www.uc123.com/?f=pcntgrid"
   )
 
-  val pool = new ConnectionPoolingClient
+  val pool = new ConnectionPoolClient
   val requestProxy = new RequestProxy(pool)
   val context = HttpClientContext.create()
   var count = 0

@@ -15,7 +15,7 @@ class TestClientPoolConnection extends FunSuite{
   test("test get localhost"){
     val httpUri = new HttpGet("http://localhost:8080/LoginDemo")
     val context = HttpClientContext.create()
-    val poolingClient = new ConnectionPoolingClient
+    val poolingClient = new ConnectionPoolClient
     poolingClient.doRequest(httpUri,context) match {
       case r:TextResponse =>
         println(r.mkHttpString())
