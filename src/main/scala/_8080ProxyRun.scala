@@ -1,6 +1,6 @@
 import java.net.SocketException
 
-import http.{ConnectionPoolingClient, RequestProxy}
+import http.{ConnectionPoolClient, RequestProxy}
 import mock.client.HttpClientMock
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.protocol.HttpClientContext
@@ -17,9 +17,11 @@ object _8080ProxyRun extends App{
   val proxyPort = 689
   val proxy = "localhost"
   val httpClient = new HttpClientMock
+  val demoUrl = "http://localhost:8080/LoginDemo/"
   val postUrl = "http://localhost:8080/LoginDemo/LoginDemo/login.do"
   val getUrl = "http://localhost:8080/LoginDemo/load?time=4"
   val imageUrl = "http://localhost:8080/LoginDemo/pic/1.jpg"
+  val jsUrl = "http://localhost:8080/LoginDemo/index.html"
 
   def get(url:String) : Thread = {
     val doGet = new Runnable {
@@ -33,7 +35,7 @@ object _8080ProxyRun extends App{
   }
 
   val httpGet = new HttpGet(getUrl)
-  val newHttpPooling = new ConnectionPoolingClient
+  val newHttpPooling = new ConnectionPoolClient
   val requestProxy = new RequestProxy(newHttpPooling)
   val httpContext = HttpClientContext.create()
   def doGetByProxyThread(targetURI:String, onSuccess: (String)=>Unit):Thread = {
@@ -43,6 +45,7 @@ object _8080ProxyRun extends App{
           val result = httpClient.doGetByProxyWithHttp( proxy, proxyPort, targetURI)
           //val proxyRequest = httpClient.buildProxyRequest(proxy, proxyPort,httpGet)
           //httpClient.doRequestProxyInPool(proxyRequest,requestProxy,httpContext)
+          onSuccess(result)
           logger.info(s"receive response length = ${result.length}")
         }
       }
@@ -83,11 +86,13 @@ object _8080ProxyRun extends App{
 //  val t1 = doGetByProxyThread("/");t1.start()
 
   val onSuccess = (result:String) =>{
-    val min = Math.min(result.length,200)
-    println(result.substring(0,min))
+//    val min = Math.min(result.length,200)
+    println(result)
   }
 
-  val t2 = doGetByProxyThread(imageUrl,onSuccess);t2.start()
+  val getSizeUrl = demoUrl + "getSize?size=10000"
+  val t2 = doGetByProxyThread(getSizeUrl,onSuccess)
+  t2.start()
   t2.join()
 
 //  Thread.sleep(6000)
