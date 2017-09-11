@@ -1,6 +1,5 @@
 package filter.response
-import constants.LoggerMark
-import entity.response.{BinaryResponse, Response, TextResponse}
+import entity.response.Response
 import org.apache.http.HttpHeaders
 import org.slf4j.LoggerFactory
 
@@ -39,45 +38,21 @@ object ResponseContentLengthFilter extends ResponseFilter{
   }
 
   private def addContentLength(response: Response) = {
-    response match {
-      case r:TextResponse =>
-        val newHeaders =  response.headers :+ (contentLength,s"${r.body.length}")
-        TextResponse(
-          r.firstLine,
-          newHeaders,
-          r.body
-        )
-      case r:BinaryResponse =>
-        val newHeaders =  response.headers :+ (contentLength,s"${r.body.length}")
-        BinaryResponse(
-          r.firstLine,
-          newHeaders,
-          r.body
-        )
+    response.body match {
+      case body:String =>
+        val newHeaders =  (contentLength,s"${body.length}") +: response.headers
+        response.updateHeaders(newHeaders)
+      case body:Array[Byte] =>
+        val newHeaders =  (contentLength,s"${body.length}") +: response.headers
+        response.updateHeaders(newHeaders)
     }
   }
 
   private def altContentLength(response: Response,newContentLength:String) = {
-    response match {
-      case r:TextResponse =>
-        val newHeaders =  response.headers
-        val indexOfContentLength = newHeaders.indexWhere(isContentLengthHeader)
-        newHeaders.update(indexOfContentLength,(HttpHeaders.CONTENT_LENGTH,newContentLength))
-        TextResponse(
-          r.firstLine,
-          newHeaders,
-          r.body
-        )
-      case r:BinaryResponse =>
-        val newHeaders =  response.headers
-        val indexOfContentLength = newHeaders.indexWhere(isContentLengthHeader)
-        newHeaders.update(indexOfContentLength,(HttpHeaders.CONTENT_LENGTH,newContentLength))
-        BinaryResponse(
-          r.firstLine,
-          newHeaders,
-          r.body
-        )
-    }
+    val newHeaders =  response.headers
+    val indexOfContentLength = newHeaders.indexWhere(isContentLengthHeader)
+    newHeaders.update(indexOfContentLength,(HttpHeaders.CONTENT_LENGTH,newContentLength))
+    response.updateHeaders(newHeaders)
   }
 
 

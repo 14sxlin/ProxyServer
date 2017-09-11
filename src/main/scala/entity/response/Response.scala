@@ -11,4 +11,6 @@ trait Response {
   def getContentLength : Int
   def mkHttpBinary(encoding:String = "utf-8"):Array[Byte]
   def mkHttpString(encoding:String = "utf-8"):String
+  def getHeadersString : String
+  def updateHeaders(newHeaders:Array[(String,String)]) : Response
 }
