@@ -2,36 +2,33 @@ package http
 
 import java.util.concurrent.TimeUnit
 
-import constants.{ConnectionConstants, LoggerMark}
+import constants.ConnectionConstants
 import entity.response.{BinaryResponse, Response, TextResponse}
 import org.apache.commons.lang3.StringUtils
-import org.apache.http.HttpHeaders
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.client.protocol.HttpClientContext
-import org.apache.http.impl.client.HttpClients
+import org.apache.http.impl.client.{CloseableHttpClient, HttpClients}
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager
 import org.apache.http.util.EntityUtils
-import org.slf4j.LoggerFactory
+import org.apache.http.{HttpHeaders, HttpResponse}
 import utils.IOUtils
 
 /**
   * Created by linsixin on 2017/8/25.
   */
-class ConnectionPoolingClient {
+class ConnectionPoolClient {
 
-  private val logger = LoggerFactory.getLogger(getClass)
-
-  private val cm = new PoolingHttpClientConnectionManager()
+  protected val cm = new PoolingHttpClientConnectionManager()
   import constants.Timeout._
-  private val config =
+  protected val config : RequestConfig =
     RequestConfig.custom()
         .setConnectionRequestTimeout(connectionRequestTimeout)
         .setConnectTimeout(connectTimeout)
         .setSocketTimeout(readTimeout)
         .build()
   cm.setMaxTotal(ConnectionConstants.maxConnection)
-  private val client =
+  protected val client : CloseableHttpClient =
     HttpClients.custom()
         .setConnectionManager(cm)
         .setDefaultRequestConfig(config)
@@ -41,6 +38,12 @@ class ConnectionPoolingClient {
   def doRequest(request:HttpUriRequest,
                 context: HttpClientContext) : Response = {
     val httpResponse = client.execute(request,context)
+    val response = adapt(httpResponse)
+    httpResponse.close()
+    response
+  }
+
+  protected def adapt(httpResponse:HttpResponse):Response = {
     val entity = httpResponse.getEntity
     val headers = httpResponse.getAllHeaders.map(h => (h.getName, h.getValue))
 
@@ -83,16 +86,15 @@ class ConnectionPoolingClient {
           }
         )
     }
-    httpResponse.close()
     response
   }
 
-  private def isTextEntity(headers:Array[(String,String)]) = {
+  protected def isTextEntity(headers:Array[(String,String)]): Boolean = {
     headers.exists(contentTypeHeader) &&
       headers.find(contentTypeHeader).get._2.contains("text")
   }
 
-  private def contentTypeHeader (nameValue:(String,String)) :Boolean= {
+  protected def contentTypeHeader (nameValue:(String,String)) :Boolean= {
     nameValue._1 == HttpHeaders.CONTENT_TYPE
   }
 

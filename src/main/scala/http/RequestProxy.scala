@@ -4,7 +4,7 @@ import constants.LoggerMark
 import entity.response.Response
 import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.client.protocol.HttpClientContext
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 /**
   * Created by linsixin on 2017/8/25.
@@ -14,9 +14,9 @@ import org.slf4j.LoggerFactory
   * is not thread safe. So RequestProxy is also
   * thread unsafe.
   */
-class RequestProxy(private val connectionPoolingClient: ConnectionPoolingClient) {
+class RequestProxy(private val connectionPoolingClient: ConnectionPoolClient) {
 
-  private val logger = LoggerFactory.getLogger(getClass)
+  protected val logger : Logger = LoggerFactory.getLogger(getClass)
 
   def doRequest(request:HttpUriRequest,context:HttpClientContext): Response = {
     logger.info(s"${LoggerMark.up} proxy do request : \n${request.getRequestLine.toString}")
