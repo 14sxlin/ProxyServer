@@ -8,7 +8,7 @@ import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.entity.ByteArrayEntity
 import org.apache.http.{HttpHeaders, HttpResponse}
 import org.slf4j.{Logger, LoggerFactory}
-import utils.{GZipUtils, HexUtils, IOUtils}
+import utils.{GZipUtils, IOUtils}
 
 /**
   * Created by linsixin on 2017/9/9.
@@ -37,9 +37,7 @@ class CompressConnectionPoolClient extends InterceptConnectionPoolClient{
       {
         val compress = GZipUtils.encode(content)
         val compressBytes = new ByteArrayEntity(compress)
-        val compressEntity = new GzipCompressingEntity(compressBytes)
-        httpResponse.setEntity(compressEntity)
-        println(HexUtils.toHex(compress))
+        httpResponse.setEntity(compressBytes)
         assert(httpResponse.getAllHeaders.exists(_.getName == HttpHeaders.CONTENT_ENCODING))
       }
       in.close()

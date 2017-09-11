@@ -1,4 +1,4 @@
-import java.net.{Socket, SocketException, SocketTimeoutException}
+import java.net.{Socket, SocketException}
 import java.util.concurrent.ArrayBlockingQueue
 
 import connection._
@@ -8,8 +8,7 @@ import constants.{ConnectionConstants, LoggerMark, Timeout}
 import entity.request._
 import entity.request.adapt.{NoneBodyRequestAdapter, RequestAdapter, RequestWithBodyAdapter}
 import filter.RequestFilterChain
-import http.{ConnectionPoolingClient, RequestProxy}
-import org.apache.commons.lang3.StringUtils
+import http.{CompressConnectionPoolClient, ConnectionPoolClient, RequestProxy}
 import org.apache.http.client.protocol.HttpClientContext
 import org.slf4j.LoggerFactory
 import utils.{HashUtils, HttpUtils}
@@ -33,7 +32,8 @@ object HttpProxyServerRun2 extends App {
   val serverConPool = new ServerConnectionPool[ServerConnection]()
 
   for( i <- 1 to 3){
-    val connectionPoolingClient = new ConnectionPoolingClient
+    val connectionPoolingClient = new CompressConnectionPoolClient
+//    val connectionPoolingClient = new ConnectionPoolClient
     val requestProxy = new RequestProxy(connectionPoolingClient)
     val requestConsumeThread = new RequestConsumeThread(clientPool,requestQueue,requestProxy)
     requestConsumeThread.setName(s"Request-Consume-Thread$i")
@@ -126,7 +126,9 @@ object HttpProxyServerRun2 extends App {
     client.readBinaryData() match {
       case Some(rawRequest) =>
         logger.info(s"${LoggerMark.up} raw in String: \n" +
-          StringUtils.substringBefore(new String(rawRequest),"\n"))
+//          StringUtils.substringBefore(new String(rawRequest),"\n")
+          new String(rawRequest)
+        )
         RequestFactory.buildRequest(rawRequest) match {
           case r : TotalEncryptRequest => r
           case r : HeaderRecognizedRequest =>

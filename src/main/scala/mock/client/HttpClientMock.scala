@@ -10,7 +10,7 @@ import org.apache.http.impl.client.HttpClients
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.util.EntityUtils
 import org.slf4j.LoggerFactory
-import utils.IOUtils
+import utils.{GZipUtils, HexUtils, IOUtils}
 
 import scala.collection.JavaConversions._
 
@@ -84,9 +84,12 @@ class HttpClientMock {
 
     val entity = response.getEntity
     val content = IOUtils.dataFromResponseInputStream(entity.getContent)
-//    FileUtils.save2File("logs/test.jpg",content)
-//    response.close()
-//    client.close()
+    println(HexUtils.toHex(content))
+//    println("decode :\n" + new String(GZipUtils.decode(content))
+//      +"\n\n\n\n")
+    //    FileUtils.save2File("logs/test.jpg",content)
+    response.close()
+    client.close()
 
     new String(content,"utf-8")
   }
