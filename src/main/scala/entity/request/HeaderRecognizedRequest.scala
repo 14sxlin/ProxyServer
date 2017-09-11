@@ -51,20 +51,8 @@ abstract class HeaderRecognizedRequest(val firstLine:String,
 
   def updateFirstLine(newFirstLine:String):HeaderRecognizedRequest
 
-    //    request match {
-//      case r: TextRequest =>
-//        EmptyBodyRequest(newUri, r.headers).toTextRequest(r.body)
-//      case r: ByteBodyRequest =>
-//        EmptyBodyRequest(newUri, r.headers).toByteBodyRequest(r.body)
-//    }
 
   def updateHeaders(newHeaders:Array[(String,String)]):HeaderRecognizedRequest
-//    request match {
-//      case r: TextRequest =>
-//        EmptyBodyRequest(r.firstLine, newHeaders).toTextRequest(r.body)
-//      case r: ByteBodyRequest =>
-//        EmptyBodyRequest(r.firstLine, newHeaders).toByteBodyRequest(r.body)
-//    }
 
   def method : String = {
     firstLineInfo._1
