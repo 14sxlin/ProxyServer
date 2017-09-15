@@ -22,3 +22,6 @@ libraryDependencies += "org.apache.httpcomponents" % "httpclient" % "4.5.3"
 
 // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
 libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.6"
+
+// https://mvnrepository.com/artifact/org.ehcache/ehcache
+libraryDependencies += "org.ehcache" % "ehcache" % "3.4.0"
