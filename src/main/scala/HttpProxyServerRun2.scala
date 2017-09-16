@@ -1,19 +1,14 @@
-import java.net.{Socket, SocketException}
+import java.net.SocketException
 import java.util.concurrent.ArrayBlockingQueue
 
 import connection._
 import connection.dispatch.{ClientRequestDispatcher, RequestConsumeThread}
 import connection.pool.{ClientServiceUnitPool, ServerConnectionPool}
-import constants.{ConnectionConstants, LoggerMark, Timeout}
+import constants.{ConnectionConstants, LoggerMark}
+import controller.RequestController
 import entity.request._
-import entity.request.adapt.{NoneBodyRequestAdapter, RequestAdapter, RequestWithBodyAdapter}
-import filter.RequestFilterChain
-import http.{CompressConnectionPoolClient, ConnectionPoolClient, RequestProxy}
-import org.apache.http.client.protocol.HttpClientContext
+import http.{CompressConnectionPoolClient, RequestProxy}
 import org.slf4j.LoggerFactory
-import utils.{HashUtils, HttpUtils}
-
-import scala.annotation.tailrec
 
 /**
   * Created by linsixin on 2017/8/25.
@@ -23,13 +18,11 @@ object HttpProxyServerRun2 extends App {
   val logger = LoggerFactory.getLogger(getClass)
   val port = 689
 
-
   val requestQueue = new ArrayBlockingQueue[RequestUnit](ConnectionConstants.maxConnection)
-
   val clientPool = new ClientServiceUnitPool
   val requestDispatcher = new ClientRequestDispatcher(clientPool)
-
   val serverConPool = new ServerConnectionPool[ServerConnection]()
+  val controller = new RequestController(requestDispatcher,requestQueue)
 
   for( i <- 1 to 3){
     val connectionPoolingClient = new CompressConnectionPoolClient
@@ -41,11 +34,6 @@ object HttpProxyServerRun2 extends App {
     requestConsumeThread.setPriority(10)
     requestConsumeThread.start()
   }
-
-
-//  val clientServiceGCThread = new IdleServiceGCThread[ClientServiceUnit](clientPool)
-//  clientServiceGCThread.setName("ClientService-GC")
-//  clientServiceGCThread.start()
 
   val beginTask = new Runnable {
     override def run() : Unit = {
@@ -68,7 +56,7 @@ object HttpProxyServerRun2 extends App {
     val processRun = new Runnable {
       override def run(): Unit =
         try{
-          startNewThreadToProcess(clientConnection)
+          controller.startProcess(clientConnection)
         }catch {
           case e: SocketException =>
             logger.warn(s"socket has closed, ${e.getMessage}")
@@ -82,103 +70,6 @@ object HttpProxyServerRun2 extends App {
     processThread.setPriority(3)
     processThread.start()
     logger.info(s"${LoggerMark.resource} process-active-count: ${runGroup.activeCount()}")
-  }
-
-  // todo maybe this can make a conform api
-  private def startNewThreadToProcess(client: ClientConnection):Unit = {
-    val request = readAndParseToRequest(client)
-    request match {
-      case EmptyRequest => //return
-        logger.warn(s"${LoggerMark.resource} empty request..close socket")
-        client.closeAllResource()
-      case e: TotalEncryptRequest => //ssl
-        throw new Exception(s"unable to process, ${new String(e.bytes)}")
-      case request:HeaderRecognizedRequest if request.method =="CONNECT" =>
-        val uri = request.uri
-        val host = uri.split(":").head.trim
-        val port = uri.split(":").last.trim.toInt
-        val establishInfo = HttpUtils.establishConnectInfo
-        client.writeBinaryData(establishInfo.getBytes())
-        start433Communicate(client,host,port)
-      case request : HeaderRecognizedRequest => //post get
-        val hash = HashUtils.getHash(client,request)
-        processGetOrPostRequest(hash,request,client)
-        @tailrec //todo catch read time out
-        def readRemainingRequest() : Unit = {
-          val newRequest = readAndParseToRequest(client)
-          if(newRequest != EmptyRequest){
-            processGetOrPostRequest(hash, //TODO this asInstance is dangerous
-              newRequest.asInstanceOf[HeaderRecognizedRequest],client)
-            readRemainingRequest()
-          }else{
-            //TODO maybe should do something
-            logger.info(s"${LoggerMark.process} nothing to read ..sleep ")
-            Thread.sleep(1000)
-//            client.closeAllResource()
-          }
-        }
-        readRemainingRequest()
-    }
-
-  }
-
-  def readAndParseToRequest(client: ClientConnection):Request = {
-    client.readBinaryData() match {
-      case Some(rawRequest) =>
-        logger.info(s"${LoggerMark.up} raw in String: \n" +
-//          StringUtils.substringBefore(new String(rawRequest),"\n")
-          new String(rawRequest)
-        )
-        RequestFactory.buildRequest(rawRequest) match {
-          case r : TotalEncryptRequest => r
-          case r : HeaderRecognizedRequest =>
-            RequestFilterChain.handle(r)
-        }
-      case None => EmptyRequest
-    }
-  }
-
-  private def processGetOrPostRequest(hash:String,
-                                      request: HeaderRecognizedRequest,
-                                      clientConnection: ClientConnection):Unit = {
-    var adapter: RequestAdapter = null
-    request match {
-      case _ : EmptyBodyRequest =>
-        adapter = NoneBodyRequestAdapter
-      case _ =>
-        adapter = RequestWithBodyAdapter
-    } // great can assign object to variable
-
-    val httpUriRequest = adapter.adapt(request)
-    if(requestDispatcher.containsKey(hash)){
-      val requestUnit = requestDispatcher.buildRequestUnit(hash,httpUriRequest)
-      requestQueue.put(requestUnit)
-//      connectionPoolingClient.closeIdleConnection(ConnectionConstants.idleThreshold.toInt)
-    }else{
-      val serviceUnit = new ClientServiceUnit(clientConnection,HttpClientContext.create())
-      requestDispatcher.addNewServiceUnit(hash,serviceUnit)
-      val requestUnit = requestDispatcher.buildRequestUnit(hash,httpUriRequest)
-      requestQueue.put(requestUnit)
-//      connectionPoolingClient.closeIdleConnection(ConnectionConstants.idleThreshold.toInt)
-    }
-  }
-
-
-  var authenticate = true
-  def start433Communicate(client: ClientConnection, host:String, port:Int): Unit = {
-    if(authenticate) {
-      client.setReadTimeout(Timeout._443ReadTimeout)
-      val serverSocket = new Socket(host,port)
-      val serverCon = new ServerConnection(serverSocket,s"$host:$port")
-      client.setReadTimeout(Timeout._443ReadTimeout)
-      serverCon.openConnection()
-      val transfer = new DataTransfer(client,serverCon)
-      transfer.startCommunicate()
-      //todo when to close transfer
-    }else{
-      client.writeTextData(HttpUtils.unauthenicationInfo)
-      client.closeAllResource()
-    }
   }
 
 
