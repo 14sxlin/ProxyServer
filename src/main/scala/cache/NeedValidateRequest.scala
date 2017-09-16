@@ -6,7 +6,7 @@ package cache
   * that you need to validate every time
   * relating to header "Cache-Control:no-cache".
   */
-class NeedValidateRequest(override var validate: Validate) extends Cacheable{
+class NeedValidateRequest(validate: Validate) extends Cacheable{
 
 
 }

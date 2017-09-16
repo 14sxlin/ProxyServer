@@ -8,14 +8,14 @@ import org.scalatest.FunSuite
 class TestCache extends FunSuite{
   test("disk cache "){
     val cache = new HttpCache("D://test-cache/1.temp")
-    cache.put("hello","hello".getBytes())
+    cache.put("hello",CacheUnit("hello",null))
 
     val data = cache.get("hello").get
-    assert("hello" == new String(data))
+    assert("hello" == data.absoluteUri)
 
-    cache.replace("hello","hello world".getBytes())
+    cache.replace("hello",CacheUnit("hello world",null))
     val newData = cache.get("hello").get
-    assert("hello world" == new String(newData))
+    assert("hello world" == newData.absoluteUri)
 
     cache.close()
   }

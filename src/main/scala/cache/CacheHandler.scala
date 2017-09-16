@@ -47,8 +47,8 @@ class CacheHandler(httpCache: HttpCache) {
     }
   }
 
-  val cacheHeader = Array("","")
-  val unCacheHeader = Array()
+  val cacheHeader = Array("")
+  val unCacheHeader = Array("")
   private def genCacheRequest(request: HeaderRecognizedRequest):Option[Cacheable] = {
     if(request.method.toUpperCase != "GET")
       return None
