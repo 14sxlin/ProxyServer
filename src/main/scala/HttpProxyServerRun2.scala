@@ -2,12 +2,12 @@ import java.net.SocketException
 import java.util.concurrent.ArrayBlockingQueue
 
 import connection._
-import connection.dispatch.{ClientRequestDispatcher, RequestConsumeThread}
-import connection.pool.{ClientServiceUnitPool, ServerConnectionPool}
+import connection.dispatch.{RequestConsumeThread, RequestDispatcher}
+import connection.pool.{ClientContextUnitPool, ServerConnectionPool}
 import constants.{ConnectionConstants, LoggerMark}
 import controller.RequestController
-import entity.request._
-import http.{CompressConnectionPoolClient, RequestProxy}
+import http.{ConnectionPoolClient, RequestProxy}
+import model.RequestUnit
 import org.slf4j.LoggerFactory
 
 /**
@@ -19,14 +19,20 @@ object HttpProxyServerRun2 extends App {
   val port = 689
 
   val requestQueue = new ArrayBlockingQueue[RequestUnit](ConnectionConstants.maxConnection)
-  val clientPool = new ClientServiceUnitPool
-  val requestDispatcher = new ClientRequestDispatcher(clientPool)
-  val serverConPool = new ServerConnectionPool[ServerConnection]()
+  val clientPool = new ClientContextUnitPool
+
+//  val httpCache = new HttpCache("D:\\test-cache\\proxyserver")
+//  val cacheHandler = new CacheHandler(httpCache)
+//  val requestDispatcher = new CacheRequestDispatcher(clientPool)
+//  val controller = new CacheRequestController(requestDispatcher,requestQueue,cacheHandler)
+
+  val requestDispatcher = new RequestDispatcher(clientPool)
   val controller = new RequestController(requestDispatcher,requestQueue)
+  val serverConPool = new ServerConnectionPool[ServerConnection]()
 
   for( i <- 1 to 3){
-    val connectionPoolingClient = new CompressConnectionPoolClient
-//    val connectionPoolingClient = new ConnectionPoolClient
+//    val connectionPoolingClient = new CompressConnectionPoolClient
+    val connectionPoolingClient = new ConnectionPoolClient
     val requestProxy = new RequestProxy(connectionPoolingClient)
     val requestConsumeThread = new RequestConsumeThread(clientPool,requestQueue,requestProxy)
     requestConsumeThread.setName(s"Request-Consume-Thread$i")
@@ -48,7 +54,7 @@ object HttpProxyServerRun2 extends App {
 
   val runGroup = new ThreadGroup("Process-Theads")
 
-  def begin(): Unit = {
+  def begin(): Unit = this.synchronized{
     val receiver = ConnectionReceiver(port)
     val clientConnection = receiver.accept()
     clientConnection.openConnection()
@@ -67,7 +73,6 @@ object HttpProxyServerRun2 extends App {
     val processThread = new Thread(runGroup,processRun)
     processThread.setName(s"Process-Thread-" +
       s"${clientConnection.socket.getRemoteSocketAddress.toString}")
-    processThread.setPriority(3)
     processThread.start()
     logger.info(s"${LoggerMark.resource} process-active-count: ${runGroup.activeCount()}")
   }
