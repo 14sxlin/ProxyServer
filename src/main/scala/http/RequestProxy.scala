@@ -19,6 +19,7 @@ class RequestProxy(private val connectionPoolingClient: ConnectionPoolClient) {
   protected val logger : Logger = LoggerFactory.getLogger(getClass)
 
   def doRequest(request:HttpUriRequest,context:HttpClientContext): Response = {
+    connectionPoolingClient.closeIdleConnection(5)
     logger.info(s"${LoggerMark.up} proxy do request : \n${request.getRequestLine.toString}")
     connectionPoolingClient.doRequest(request,context)
   }
