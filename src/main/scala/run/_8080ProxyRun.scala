@@ -92,8 +92,8 @@ object _8080ProxyRun extends App{
     println(result)
   }
 
-  val getSizeUrl = demoUrl + "getSize?size=10000"
-  val t2 = doGetByProxyThread(getSizeUrl,onSuccess)
+//  val getSizeUrl = demoUrl + "getSize?size=10000"
+  val t2 = doGetByProxyThread(demoUrl,onSuccess)
   t2.start()
   t2.join()
 
