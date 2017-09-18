@@ -2,6 +2,7 @@ package http
 
 import java.io.ByteArrayOutputStream
 
+import constants.LoggerMark
 import entity.response.{BinaryResponse, Response}
 import org.apache.http.client.entity.GzipCompressingEntity
 import org.apache.http.client.protocol.HttpClientContext
@@ -28,13 +29,12 @@ class CompressConnectionPoolClient extends InterceptConnectionPoolClient{
     }
     if(contentType.get.getValue.startsWith("text/") &&
         context.getRequestConfig.isContentCompressionEnabled){
-      httpResponse.addHeader("Content-Encoding", "gzip")
-//    httpResponse.addHeader("Transfer-Encoding", "chunked")
       val in = httpResponse.getEntity.getContent
       val content = IOUtils.dataFromResponseInputStream(in)
-      httpResponse.addHeader("Content-Length",""+content.length)
       if(content.length >  (2 >> 10)) // 1kB
       {
+        httpResponse.addHeader("Content-Encoding", "gzip")
+        updateContentLength(httpResponse,content.length)
         val compress = GZipUtils.encode(content)
         val compressBytes = new ByteArrayEntity(compress)
         httpResponse.setEntity(compressBytes)
@@ -45,6 +45,16 @@ class CompressConnectionPoolClient extends InterceptConnectionPoolClient{
       logger.info("not text type,don't compress")
     }
 
+  }
+
+  private def updateContentLength(httpResponse: HttpResponse,length:Int) : Unit = {
+    val existsHeaders = httpResponse.getHeaders(HttpHeaders.CONTENT_LENGTH)
+    if(existsHeaders.isEmpty)
+      httpResponse.addHeader(HttpHeaders.CONTENT_LENGTH,""+length)
+    else{
+      httpResponse.setHeader(HttpHeaders.CONTENT_LENGTH,""+length)
+      logger.info(s"${LoggerMark.process} content-length: ${httpResponse.getHeaders(HttpHeaders.CONTENT_LENGTH)(0)} : $length")
+    }
   }
 
   override protected def adapt(httpResponse: HttpResponse): Response = {
