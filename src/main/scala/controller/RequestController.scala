@@ -1,15 +1,17 @@
 package controller
 
-import java.net.Socket
+import java.net.{Socket, SocketTimeoutException}
 import java.util.concurrent.ArrayBlockingQueue
 
-import connection.dispatch.ClientRequestDispatcher
-import connection.{ClientConnection, ClientServiceUnit, DataTransfer, ServerConnection}
+import connection.dispatch.RequestDispatcher
+import connection.{ClientConnection, DataTransfer, ServerConnection}
 import constants.{LoggerMark, Timeout}
 import entity.request._
 import entity.request.adapt.{NoneBodyRequestAdapter, RequestAdapter, RequestWithBodyAdapter}
 import filter.RequestFilterChain
+import model.{ContextUnit, RequestUnit}
 import org.apache.commons.lang3.StringUtils
+import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.client.protocol.HttpClientContext
 import org.slf4j.LoggerFactory
 import utils.{HashUtils, HttpUtils}
@@ -19,14 +21,32 @@ import scala.annotation.tailrec
 /**
   * Created by linsixin on 2017/9/16.
   */
-class RequestController(requestDispatcher:ClientRequestDispatcher,
+class RequestController(requestDispatcher:RequestDispatcher,
                         requestQueue: ArrayBlockingQueue[RequestUnit]) {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
   def startProcess(client: ClientConnection):Unit = {
-    val request = readAndParseToRequest(client)
-    processRequest(request,client)
+    ifTimeOutThenClose(client){
+      val request = readAndParseToRequest(client)
+      processRequest(request,client)
+    }
+  }
+
+  private def readAndParseToRequest(client: ClientConnection):Request = {
+    client.readBinaryData() match {
+      case Some(rawRequest) =>
+        logger.info(s"${LoggerMark.up} raw in String: \n" +
+          StringUtils.substringBefore(new String(rawRequest),"\n")
+          //          new String(rawRequest)
+        )
+        RequestFactory.buildRequest(rawRequest) match {
+          case r : TotalEncryptRequest => r
+          case r : HeaderRecognizedRequest =>
+            RequestFilterChain.handle(r)
+        }
+      case None => EmptyRequest
+    }
   }
 
   protected def processRequest(request: Request,client: ClientConnection): Unit = {
@@ -55,34 +75,26 @@ class RequestController(requestDispatcher:ClientRequestDispatcher,
             readRemainingRequest()
           }else{
             //TODO maybe should do something
-            logger.info(s"${LoggerMark.process} nothing to read ..sleep ")
-            Thread.sleep(1000)
-            //            client.closeAllResource()
+            logger.info(s"${LoggerMark.process} nothing to read ..close ")
+            client.closeAllResource()
           }
         }
         readRemainingRequest()
+
     }
   }
 
-  private def readAndParseToRequest(client: ClientConnection):Request = {
-    client.readBinaryData() match {
-      case Some(rawRequest) =>
-        logger.info(s"${LoggerMark.up} raw in String: \n" +
-                    StringUtils.substringBefore(new String(rawRequest),"\n")
-//          new String(rawRequest)
-        )
-        RequestFactory.buildRequest(rawRequest) match {
-          case r : TotalEncryptRequest => r
-          case r : HeaderRecognizedRequest =>
-            RequestFilterChain.handle(r)
-        }
-      case None => EmptyRequest
-    }
-  }
-
+  /**
+    *
+    * @param hash use HashUtils.getHash(client,request) to get hash value
+    */
   protected def processGetOrPostRequest(hash:String,
-                                      request: HeaderRecognizedRequest,
-                                      clientConnection: ClientConnection):Unit = {
+                                        request: HeaderRecognizedRequest,
+                                        clientConnection: ClientConnection):Unit = {
+    dispatch(hash,adapt(request),clientConnection)
+  }
+
+  protected def adapt(request: HeaderRecognizedRequest) : HttpUriRequest= {
     var adapter: RequestAdapter = null
     request match {
       case _ : EmptyBodyRequest =>
@@ -90,24 +102,35 @@ class RequestController(requestDispatcher:ClientRequestDispatcher,
       case _ =>
         adapter = RequestWithBodyAdapter
     } // great can assign object to variable
+    adapter.adapt(request)
+  }
 
-    val httpUriRequest = adapter.adapt(request)
-    if(requestDispatcher.containsKey(hash)){
-      val requestUnit = requestDispatcher.buildRequestUnit(hash,httpUriRequest)
-      requestQueue.put(requestUnit)
-      //      connectionPoolingClient.closeIdleConnection(ConnectionConstants.idleThreshold.toInt)
-    }else{
-      val serviceUnit = new ClientServiceUnit(clientConnection,HttpClientContext.create())
-      requestDispatcher.addNewServiceUnit(hash,serviceUnit)
-      val requestUnit = requestDispatcher.buildRequestUnit(hash,httpUriRequest)
-      requestQueue.put(requestUnit)
-      //      connectionPoolingClient.closeIdleConnection(ConnectionConstants.idleThreshold.toInt)
+  protected def dispatch(hash:String,
+                         httpUriRequest: HttpUriRequest,
+                         clientConnection: ClientConnection):Unit = {
+    if(requestDispatcher.containsKey(hash))
+      putReuqestUnit(hash,httpUriRequest)
+    else{
+      createAndPutContextUnit(hash,httpUriRequest,clientConnection)
+      putReuqestUnit(hash,httpUriRequest)
     }
   }
 
+  protected def createAndPutContextUnit(hash:String,
+                                        httpUriRequest: HttpUriRequest,
+                                        clientConnection: ClientConnection): Unit = {
+    val contextUnit = ContextUnit(clientConnection,HttpClientContext.create())
+    requestDispatcher.addNewContextUnit(hash,contextUnit)
+  }
+
+  protected def putReuqestUnit(hash:String,httpUriRequest: HttpUriRequest): Unit = {
+    val requestUnit = requestDispatcher.buildRequestUnit(hash,httpUriRequest)
+    requestQueue.put(requestUnit)
+    logger.info(s"${LoggerMark.resource} rest : ${requestQueue.size()}")
+  }
 
   var authenticate = true
-  protected def start433Communicate(client: ClientConnection, host:String, port:Int): Unit = {
+  private def start433Communicate(client: ClientConnection, host:String, port:Int): Unit = {
     if(authenticate) {
       client.setReadTimeout(Timeout._443ReadTimeout)
       val serverSocket = new Socket(host,port)
@@ -120,6 +143,16 @@ class RequestController(requestDispatcher:ClientRequestDispatcher,
     }else{
       client.writeTextData(HttpUtils.unauthenicationInfo)
       client.closeAllResource()
+    }
+  }
+
+  protected def ifTimeOutThenClose(client: ClientConnection)(run : => Unit): Unit ={
+    try{
+      run
+    }catch {
+      case e: SocketTimeoutException =>
+        logger.error(e.getMessage + " .. close resource..")
+        client.closeAllResource()
     }
   }
 
