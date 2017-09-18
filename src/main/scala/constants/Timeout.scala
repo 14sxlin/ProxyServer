@@ -22,4 +22,9 @@ object Timeout {
     * for 443
     */
   val _443ReadTimeout = 30000
+
+  /**
+    * expire time
+    */
+  val expire = 3600
 }
