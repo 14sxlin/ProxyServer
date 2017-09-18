@@ -8,4 +8,5 @@ object LoggerMark {
   val down : String= "response " + "<<"*5
   val process : String= "process "+ "*"*10
   val resource : String= "resource " + "#"*10
+  val cache : String = "cache " + "$" * 10
 }
