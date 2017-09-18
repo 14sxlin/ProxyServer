@@ -1,13 +1,19 @@
 package cache
 
-import scala.beans.BeanProperty
-
 /**
   * Created by linsixin on 2017/9/14.
   */
-trait Cacheable {
+trait Cacheable extends Serializable{
 
-  @BeanProperty  var validate : Validate = _
+  var validate : Validate = _
 
   def hasValidateMechanism : Boolean = validate != null
+
+  def prolong():Unit = {
+    if(!hasValidateMechanism)
+      throw new IllegalStateException("no validate machanism")
+    else
+      validate.prolongDelay()
+  }
+
 }

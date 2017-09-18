@@ -1,13 +1,21 @@
 package cache
 
+import constants.LoggerMark
 import entity.request.{HeaderRecognizedRequest, ResponseCachedRequest, ValidateRequest}
+import entity.response.Response
+import model.CacheUnit
 import org.apache.http.HttpHeaders
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable.ArrayBuffer
+
 /**
   * Created by linsixin on 2017/9/14.
+  * Check whether the request can be put
+  * into cache. If it can then put it into
+  * cache and wait for fulfill.
   */
-class CacheHandler(httpCache: HttpCache) {
+class CacheHandler(val httpCache: HttpCache) {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
@@ -15,19 +23,9 @@ class CacheHandler(httpCache: HttpCache) {
     val absUri = getAbsoluteUri(request)
     httpCache.get(absUri) match {
       case Some(cacheUnit) =>
-        if(cacheUnit.hasFilled)
-          ResponseCachedRequest(absUri,cacheUnit.getResponse)
-        else{
-          ValidateRequest(absUri,request)
-        }
+        decideIfRequestShouldValidateEveryTime(absUri,request,cacheUnit)
       case None =>
-        genCacheRequest(request) match {
-          case None =>
-            request
-          case Some(cacheableRequest) =>
-            httpCache.put(absUri,CacheUnit(absUri,cacheableRequest))
-            ValidateRequest(absUri,request) // need to fulfill
-        }
+        decideCacheTypeAndPutCacheUnit(absUri,request)
     }
 
   }
@@ -47,51 +45,83 @@ class CacheHandler(httpCache: HttpCache) {
     }
   }
 
+  private def decideIfRequestShouldValidateEveryTime(absUri:String,
+                                                     request:HeaderRecognizedRequest,
+                                                     cacheUnit: CacheUnit) = {
+    if(cacheUnit.hasFilled) {
+      if(cacheUnit.isOutOfDate){
+        logger.info(s"${LoggerMark.cache} has cache but expire")
+        val validateRequest =
+          addIfNoneMatchAndIfModifySinceHeaders(request,cacheUnit.getResponse)
+        ValidateRequest(absUri,validateRequest)
+      }else{
+        logger.info(s"${LoggerMark.cache} take from cache:\n + ${cacheUnit.getResponse.mkHttpString()}")
+        ResponseCachedRequest(absUri, cacheUnit.getResponse)
+      }
+    }else{
+      logger.info(s"${LoggerMark.cache} has cache unit but not fill")
+      ValidateRequest(absUri,request)
+    }
+  }
+
+  private def decideCacheTypeAndPutCacheUnit(absUri:String,
+                                 request:HeaderRecognizedRequest) = {
+    decideCacheType(request) match {
+      case _ : UnCacheableRequest =>
+        logger.info(s"${LoggerMark.cache} not allow to cache :\n" +
+          s"${request.mkHttpStringOfFirstLineAndHeaders}")
+        request
+      case cacheableRequest =>
+        logger.info(s"${LoggerMark.cache} no cache,create new one:\n + $cacheableRequest")
+        httpCache.put(absUri,CacheUnit(absUri,cacheableRequest))
+        ValidateRequest(absUri,request) // need to fulfill
+    }
+  }
+
+  private def addIfNoneMatchAndIfModifySinceHeaders(request: HeaderRecognizedRequest, response: Response) = {
+    logger.info(s"${LoggerMark.cache} decorate, add last-modify and etag")
+    val addition = ArrayBuffer[(String,String)]()
+    val eTag = response.headers.find(_._1 == HttpHeaders.ETAG).getOrElse("" -> "")._2
+    addition += HttpHeaders.IF_NONE_MATCH -> eTag
+    val lastModify = response.headers.find(_._1 == HttpHeaders.LAST_MODIFIED).getOrElse("" -> "")._2
+    addition += HttpHeaders.IF_MODIFIED_SINCE -> lastModify
+    val newHeaders = request.headers ++ addition.filter( _._2 != "")
+    request.updateHeaders(newHeaders)
+  }
+
   val cacheHeader = Array("")
   val unCacheHeader = Array("")
-  private def genCacheRequest(request: HeaderRecognizedRequest):Option[Cacheable] = {
-    if(request.method.toUpperCase != "GET")
-      return None
-    if(unCacheHeader exists request.headersContains)
-      None
+
+  private def decideCacheType(request: HeaderRecognizedRequest):Cacheable = {
+    if(request.method.toUpperCase != "GET" ||
+        (unCacheHeader exists request.headersContains))
+      UnCacheableRequest.instance
     else {
       request.getHeaderValue(HttpHeaders.CACHE_CONTROL) match {
-        case None => request.getHeaderValue(HttpHeaders.EXPIRES) match {
-          case None => None
-          case Some(expire) =>
-            Some(new DirectRequest(new ExpiryValidate(expire)))
-        }
+        case None =>
+          request.getHeaderValue(HttpHeaders.EXPIRES) match {
+            case None => new NotSureCacheRequest
+            case Some(expire) =>
+              new DirectResponseRequest(new ExpiryValidate(expire))
+          }
         case Some(cacheControl) =>
           val values = cacheControl.split(",")
           if (anyEquals(values, "no-store") || anyEquals(values, "private"))
-            None
+            UnCacheableRequest.instance
           else if (anyEquals(values, "no-cache")){
-            Some(new NeedValidateRequest(new ETagValidate))
+            new NeedValidateRequest(new MaxAgeValidate)
           }
-          else None
+          else new NotSureCacheRequest
       }
     }
   }
-//
-//  val validateHeader = Array(
-//    HttpHeaders.LAST_MODIFIED,
-//    HttpHeaders.ETAG
-//  )
-//  private def genValidate(request:HeaderRecognizedRequest,header:String) : Validate = {
-//    request.getHeaderValue(header) match{
-//      case None =>
-//        throw new Exception(s"no $header value find")
-//      case Some(value) =>
-//        if(HttpHeaders.LAST_MODIFIED == header)
-//          LastModifyValidate(value)
-//        else if(HttpHeaders.ETAG == header)
-//          ETagValidate(value)
-//        else throw new Exception(s"no matche validate header : $header")
-//    }
-//  }
 
   private def anyEquals(parts:Array[String],content:String) = {
     parts.exists(_.trim == content)
+  }
+
+  def getCache(absUri:String):Option[CacheUnit] = {
+    httpCache.get(absUri)
   }
 
 }

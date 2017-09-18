@@ -1,8 +1,7 @@
 package connection.dispatch
 
-import connection.ClientServiceUnit
 import connection.pool.ClientServiceUnitPool
-import entity.request.RequestUnit
+import model.{ClientServiceUnit, RequestUnit}
 import org.apache.http.client.methods.HttpUriRequest
 import org.slf4j.LoggerFactory
 
@@ -31,6 +30,22 @@ class ClientRequestDispatcher(pool:ClientServiceUnitPool) {
   }
 
   def buildRequestUnit(key:String,
+                       request:HttpUriRequest):RequestUnit = {
+    pool.get(key) match {
+      case None =>
+        throw new IllegalArgumentException(s"There must be a ClientServiceUnit whit key $key")
+      case Some(serviceUnit) =>
+        RequestUnit(
+          key,
+          request,
+          serviceUnit.context,
+          ClientServiceUnit.onSuccess(serviceUnit.clientConnection)
+        )
+    }
+
+  }
+
+  def buildCacheRequestUnit(key:String,
                        request:HttpUriRequest):RequestUnit = {
     pool.get(key) match {
       case None =>

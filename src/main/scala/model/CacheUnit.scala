@@ -20,4 +20,5 @@ case class CacheUnit(absoluteUri:String,
 
   def getResponse : Response = response
 
+  def getResponseBinary(encoding:String="utf-8"):Array[Byte] = response.mkHttpBinary(encoding)
 }

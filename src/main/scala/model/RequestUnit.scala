@@ -1,34 +1,24 @@
-package connection
+package entity.request
 
-import constants.{ConnectionConstants, LoggerMark}
+import connection.ClientConnection
+import constants.LoggerMark
 import entity.response.Response
 import filter.ResponseFilterChain
-import org.apache.commons.lang3.StringUtils
-import org.apache.http.HttpHeaders
+import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.client.protocol.HttpClientContext
 import org.slf4j.LoggerFactory
 
 /**
-  * Created by linsixin on 2017/8/29.
-  * When put and get service unit into
-  * or from pool, updateActive() will
-  * be call.
+  * Created by linsixin on 2017/8/30.
   */
-case class ClientServiceUnit(clientConnection: ClientConnection,
-                             context:HttpClientContext) extends ServiceUnit{
-  override protected val idleThreshold: Long = ConnectionConstants.idleThreshold
-
-  override def closeWhenNotActive(): Unit = {
-    clientConnection.closeAllResource()
-  }
-}
-
-object ClientServiceUnit{
+case class RequestUnit(key:String,
+                       request:HttpUriRequest,
+                       context:HttpClientContext){
   private val logger = LoggerFactory.getLogger(getClass)
 
   def onSuccess(client:ClientConnection,
                 responseFilterChain: ResponseFilterChain.type
-                      = ResponseFilterChain ) : Response => Unit = {
+                = ResponseFilterChain ) : Response => Unit = {
     response =>
       val filtedResponse = responseFilterChain.handle(response)
       val data = filtedResponse.mkHttpBinary()

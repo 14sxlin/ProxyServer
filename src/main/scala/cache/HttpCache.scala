@@ -2,6 +2,7 @@ package cache
 
 import java.io.File
 
+import model.CacheUnit
 import org.ehcache.PersistentUserManagedCache
 import org.ehcache.config.builders.{ResourcePoolsBuilder, UserManagedCacheBuilder}
 import org.ehcache.config.units.{EntryUnit, MemoryUnit}

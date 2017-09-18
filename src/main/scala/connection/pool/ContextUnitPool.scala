@@ -1,11 +1,11 @@
 package connection.pool
 
-import connection.ServiceUnit
+import model.ContextUnit
 
 /**
   * Created by linsixin on 2017/8/11.
   */
-trait ServiceUnitPool[T <: ServiceUnit] extends Pool[T]{
+trait ServiceUnitPool[T <: ContextUnit] extends Pool[T]{
 
   def closeAndRemove(key:String):Unit = {
     if(map.containsKey(key)){
