@@ -1,13 +1,13 @@
 package connection.control
 
-import connection.ServiceUnit
-import connection.pool.ServiceUnitPool
+import connection.pool.ContextUnitPool
+import model.ContextUnit
 import org.slf4j.LoggerFactory
 
 /**
   * Created by linsixin on 2017/8/29.
   */
-class IdleServiceGCThread[T <: ServiceUnit](val conPool:ServiceUnitPool[T]) extends Thread {
+class IdleServiceGCThread[T <: ContextUnit](val conPool:ContextUnitPool[T]) extends Thread {
 
   private val logger = LoggerFactory.getLogger(getClass)
 

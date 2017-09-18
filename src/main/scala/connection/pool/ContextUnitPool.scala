@@ -5,7 +5,7 @@ import model.ContextUnit
 /**
   * Created by linsixin on 2017/8/11.
   */
-trait ServiceUnitPool[T <: ContextUnit] extends Pool[T]{
+trait ContextUnitPool[T <: ContextUnit] extends Pool[T]{
 
   def closeAndRemove(key:String):Unit = {
     if(map.containsKey(key)){

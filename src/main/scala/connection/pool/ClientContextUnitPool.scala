@@ -5,9 +5,10 @@ import model.ContextUnit
 /**
   * Created by linsixin on 2017/8/30.
   */
-class ClientServiceUnitPool extends ServiceUnitPool[ContextUnit]{
+class ClientContextUnitPool extends ContextUnitPool[ContextUnit]{
 
   override def put(key: String, unit: ContextUnit): Unit = {
+    unit.updateActiveTime()
     map.put(key,unit)
   }
 
