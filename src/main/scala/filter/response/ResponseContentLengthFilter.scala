@@ -1,4 +1,5 @@
 package filter.response
+import constants.LoggerMark
 import entity.response.Response
 import org.apache.http.HttpHeaders
 import org.slf4j.LoggerFactory
@@ -16,13 +17,13 @@ object ResponseContentLengthFilter extends ResponseFilter{
     if(response.headers.exists(isContentLengthHeader))
     {
       val (isCorrect, originalContentLen) = isContentLengthCorrect(response)
-      if(isCorrect)
+      if(isCorrect || response.headers.exists( _._1 == HttpHeaders.CONTENT_ENCODING))
         response
-      else{
-        logger.warn(s"content length not conform \n" +
+      else {
+        logger.warn(s"${LoggerMark.process} length not conform \n" +
           s"old $originalContentLen: new ${response.getContentLength}")
-        logger.warn(response.mkHttpString())
-        altContentLength(response,""+response.getContentLength)
+        logger.warn("\n" + response.mkHttpString())
+        altContentLength(response, "" + response.getContentLength)
       }
     }
     else addContentLength(response)
@@ -48,7 +49,7 @@ object ResponseContentLengthFilter extends ResponseFilter{
     }
   }
 
-  private def altContentLength(response: Response,newContentLength:String) = {
+  protected def altContentLength(response: Response,newContentLength:String): Response = {
     val newHeaders =  response.headers
     val indexOfContentLength = newHeaders.indexWhere(isContentLengthHeader)
     newHeaders.update(indexOfContentLength,(HttpHeaders.CONTENT_LENGTH,newContentLength))
