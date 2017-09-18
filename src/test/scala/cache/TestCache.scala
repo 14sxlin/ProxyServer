@@ -1,5 +1,6 @@
 package cache
 
+import model.CacheUnit
 import org.scalatest.FunSuite
 
 /**
