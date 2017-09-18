@@ -3,11 +3,12 @@ package entity.request
 /**
   * Created by linsixin on 2017/9/15.
   * This class represent to the request
-  * can cache but not fulfill yet or the
-  * cached request has been expire which
-  * need to update.
+  * can cache but not fulfill yet. So when
+  * finish getting response also need to
+  * fulfill the cache unit found by absUri.
   */
-case class ValidateRequest(absUri:String,request:HeaderRecognizedRequest) extends HeaderRecognizedRequest(request.firstLine,request.headers){
+case class ValidateRequest(absUri:String,
+                           request:HeaderRecognizedRequest) extends HeaderRecognizedRequest(request.firstLine,request.headers){
 
   def getUri : String = request.uri
 

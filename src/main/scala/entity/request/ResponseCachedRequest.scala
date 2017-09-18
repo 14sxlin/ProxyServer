@@ -18,6 +18,8 @@ case class ResponseCachedRequest(absoluteUri:String,response: Response) extends 
   override def updateHeaders(newHeaders: Array[(String, String)]): Nothing = throwException
 
   override def mkHttpBinary(): Nothing = throwException
+
+  def getResponseBinary(encoding : String ="utf-8"):Array[Byte] = response.mkHttpBinary(encoding)
 }
 
 
