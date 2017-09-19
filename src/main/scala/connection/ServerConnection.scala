@@ -3,7 +3,8 @@ package connection
 import java.io.{BufferedInputStream, BufferedOutputStream}
 import java.net.Socket
 
-import constants.Timeout
+import config.MyDefaultConfig
+import constants.ConfigNames
 
 /**
   * Created by linsixin on 2017/8/20.
@@ -14,7 +15,7 @@ import constants.Timeout
   */
 case class ServerConnection(socket: Socket) extends Connection{
 
-  setReadTimeout(Timeout._443ReadTimeout)
+  setReadTimeout(MyDefaultConfig.config.getInt(ConfigNames.readTimeout))
   /**
     * auto create a new socket
     * but unable to set connection

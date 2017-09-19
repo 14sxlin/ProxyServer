@@ -3,14 +3,14 @@ package controller
 import java.net.{Socket, SocketTimeoutException}
 import java.util.concurrent.ArrayBlockingQueue
 
+import config.MyDefaultConfig
 import connection.dispatch.RequestDispatcher
 import connection.{ClientConnection, DataTransfer, ServerConnection}
-import constants.{LoggerMark, Timeout}
+import constants.{ConfigNames, LoggerMark}
 import entity.request._
 import entity.request.adapt.{NoneBodyRequestAdapter, RequestAdapter, RequestWithBodyAdapter}
 import filter.RequestFilterChain
 import model.{ContextUnit, RequestUnit}
-import org.apache.commons.lang3.StringUtils
 import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.client.protocol.HttpClientContext
 import org.slf4j.LoggerFactory
@@ -25,7 +25,7 @@ class RequestController(requestDispatcher:RequestDispatcher,
                         requestQueue: ArrayBlockingQueue[RequestUnit]) {
 
   private val logger = LoggerFactory.getLogger(getClass)
-
+  private val readTimeout: Int = MyDefaultConfig.config.getInt(ConfigNames.readTimeout)
   def startProcess(client: ClientConnection):Unit = {
     ifTimeOutThenClose(client){
       val request = readAndParseToRequest(client)
@@ -36,10 +36,10 @@ class RequestController(requestDispatcher:RequestDispatcher,
   private def readAndParseToRequest(client: ClientConnection):Request = {
     client.readBinaryData() match {
       case Some(rawRequest) =>
-        logger.info(s"${LoggerMark.up} raw in String: \n" +
-          StringUtils.substringBefore(new String(rawRequest),"\n")
-          //          new String(rawRequest)
-        )
+//        logger.info(s"${LoggerMark.up} raw in String: \n" +
+//          StringUtils.substringBefore(new String(rawRequest),"\n")
+//          //          new String(rawRequest)
+//        )
         RequestFactory.buildRequest(rawRequest) match {
           case r : TotalEncryptRequest => r
           case r : HeaderRecognizedRequest =>
@@ -73,15 +73,22 @@ class RequestController(requestDispatcher:RequestDispatcher,
             processGetOrPostRequest(hash, //TODO this asInstance is dangerous
               newRequest.asInstanceOf[HeaderRecognizedRequest],client)
             readRemainingRequest()
-          }else{
-            //TODO maybe should do something
-            logger.info(s"${LoggerMark.process} nothing to read ..close ")
-            client.closeAllResource()
           }
+          else{
+            //TODO maybe should do something
+            logger.info(s"${LoggerMark.process} nothing to read ..close and remove context")
+           closeConAndRemoveContext(hash,client)
+          }
+
         }
         readRemainingRequest()
 
     }
+  }
+
+  private def closeConAndRemoveContext(hash:String,client: ClientConnection) :Unit = {
+    requestDispatcher.removeExistContextUnit(hash)
+    client.closeAllResource()
   }
 
   /**
@@ -91,10 +98,10 @@ class RequestController(requestDispatcher:RequestDispatcher,
   protected def processGetOrPostRequest(hash:String,
                                         request: HeaderRecognizedRequest,
                                         clientConnection: ClientConnection):Unit = {
-    dispatch(hash,adapt(request),clientConnection)
+    putRequestWithContext(hash,requestToHttpUriRequest(request),clientConnection)
   }
 
-  protected def adapt(request: HeaderRecognizedRequest) : HttpUriRequest= {
+  protected def requestToHttpUriRequest(request: HeaderRecognizedRequest) : HttpUriRequest= {
     var adapter: RequestAdapter = null
     request match {
       case _ : EmptyBodyRequest =>
@@ -105,14 +112,14 @@ class RequestController(requestDispatcher:RequestDispatcher,
     adapter.adapt(request)
   }
 
-  protected def dispatch(hash:String,
-                         httpUriRequest: HttpUriRequest,
-                         clientConnection: ClientConnection):Unit = {
+  protected def putRequestWithContext(hash:String,
+                                      httpUriRequest: HttpUriRequest,
+                                      clientConnection: ClientConnection):Unit = {
     if(requestDispatcher.containsKey(hash))
-      putReuqestUnit(hash,httpUriRequest)
+      putRequestUnit(hash,httpUriRequest)
     else{
       createAndPutContextUnit(hash,httpUriRequest,clientConnection)
-      putReuqestUnit(hash,httpUriRequest)
+      putRequestUnit(hash,httpUriRequest)
     }
   }
 
@@ -123,19 +130,20 @@ class RequestController(requestDispatcher:RequestDispatcher,
     requestDispatcher.addNewContextUnit(hash,contextUnit)
   }
 
-  protected def putReuqestUnit(hash:String,httpUriRequest: HttpUriRequest): Unit = {
+  protected def putRequestUnit(hash:String, httpUriRequest: HttpUriRequest): Unit = {
     val requestUnit = requestDispatcher.buildRequestUnit(hash,httpUriRequest)
     requestQueue.put(requestUnit)
     logger.info(s"${LoggerMark.resource} rest : ${requestQueue.size()}")
   }
 
   var authenticate = true
+
   private def start433Communicate(client: ClientConnection, host:String, port:Int): Unit = {
     if(authenticate) {
-      client.setReadTimeout(Timeout._443ReadTimeout)
+      client.setReadTimeout(readTimeout)
       val serverSocket = new Socket(host,port)
       val serverCon = new ServerConnection(serverSocket,s"$host:$port")
-      client.setReadTimeout(Timeout._443ReadTimeout)
+      client.setReadTimeout(readTimeout)
       serverCon.openConnection()
       val transfer = new DataTransfer(client,serverCon)
       transfer.startCommunicate()

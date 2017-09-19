@@ -2,7 +2,8 @@ package http
 
 import java.util.concurrent.TimeUnit
 
-import constants.ConnectionConstants
+import config.MyDefaultConfig
+import constants.ConfigNames
 import entity.response.{BinaryResponse, Response, TextResponse}
 import org.apache.commons.lang3.StringUtils
 import org.apache.http.client.config.RequestConfig
@@ -20,14 +21,13 @@ import utils.IOUtils
 class ConnectionPoolClient {
 
   protected val cm = new PoolingHttpClientConnectionManager()
-  import constants.Timeout._
   protected val config : RequestConfig =
     RequestConfig.custom()
-        .setConnectionRequestTimeout(connectionRequestTimeout)
-        .setConnectTimeout(connectTimeout)
-        .setSocketTimeout(readTimeout)
+        .setConnectionRequestTimeout(MyDefaultConfig.config.getInt(ConfigNames.connectionRequestTimeout))
+        .setConnectTimeout(MyDefaultConfig.config.getInt(ConfigNames.connectTimeout))
+        .setSocketTimeout(MyDefaultConfig.config.getInt(ConfigNames.readTimeout))
         .build()
-  cm.setMaxTotal(ConnectionConstants.maxConnection)
+  cm.setMaxTotal(MyDefaultConfig.config.getInt(ConfigNames.maxConnection))
   protected val client : CloseableHttpClient =
     HttpClients.custom()
         .setConnectionManager(cm)

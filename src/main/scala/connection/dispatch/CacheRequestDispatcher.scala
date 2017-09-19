@@ -27,14 +27,17 @@ class CacheRequestDispatcher(pool:ClientContextUnitPool) extends RequestDispatch
           onCacheSuccess(
             cacheContextUnit.clientConnection,
             cacheContextUnit.cacheUnit
-          )
+          ),
+          onFail(key,cacheContextUnit.clientConnection)
         )
       case Some(contextUnit) =>
         RequestUnit(
           key,
           request,
           contextUnit.context,
-          onSuccess(contextUnit.clientConnection)
+          onSuccess(contextUnit.clientConnection),
+          onFail(key,contextUnit.clientConnection)
+
         )
     }
 

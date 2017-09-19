@@ -3,7 +3,8 @@ package connection
 import java.io.{BufferedInputStream, BufferedOutputStream}
 import java.net.Socket
 
-import constants.Timeout
+import config.MyDefaultConfig
+import constants.ConfigNames
 
 
 /**
@@ -15,7 +16,7 @@ import constants.Timeout
   */
 case class ClientConnection(socket: Socket) extends Connection{
 
-  socket.setSoTimeout(Timeout.readTimeout) // set default timeout
+  socket.setSoTimeout(MyDefaultConfig.config.getInt(ConfigNames.readTimeout)) // set default timeout
 
   def this(socket: Socket,name:String) = {
     this(socket)

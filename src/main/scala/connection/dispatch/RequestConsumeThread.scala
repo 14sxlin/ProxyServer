@@ -3,7 +3,6 @@ package connection.dispatch
 import java.util.concurrent.ArrayBlockingQueue
 
 import connection.pool.ClientContextUnitPool
-import constants.LoggerMark
 import http.RequestProxy
 import model.RequestUnit
 import org.slf4j.LoggerFactory
@@ -16,10 +15,6 @@ class RequestConsumeThread(conPool:ClientContextUnitPool,
                            requestProxy: RequestProxy) extends Thread {
 
   private val logger = LoggerFactory.getLogger(getClass)
-
-  val onFail : Exception => Unit = (e:Exception) => {
-    logger.error("",e)
-  }
 
   override def run(): Unit = {
     while(true){
@@ -36,12 +31,13 @@ class RequestConsumeThread(conPool:ClientContextUnitPool,
         requestProxy.closeIdleConnection(10)
       }catch{
         case e:Exception =>
-          logger.error(s"${requestUnit.key} crash")
+          logger.error(s"${requestUnit.key} crash,reponse 500")
           requestUnit.request.getAllHeaders.foreach{
             headers =>
               logger.error(s"${headers.getName} : ${headers.getValue}")
           }
-          onFail(e)
+          logger.error("",e)
+          requestUnit.onFail(e)
       }
     }
   }

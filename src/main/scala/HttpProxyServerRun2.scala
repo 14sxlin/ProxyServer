@@ -1,24 +1,28 @@
 import java.net.SocketException
 import java.util.concurrent.ArrayBlockingQueue
 
+import config.MyDefaultConfig.config
 import connection._
 import connection.dispatch.{RequestConsumeThread, RequestDispatcher}
 import connection.pool.{ClientContextUnitPool, ServerConnectionPool}
-import constants.{ConnectionConstants, LoggerMark}
+import constants.ConfigNames
 import controller.RequestController
 import http.{ConnectionPoolClient, RequestProxy}
 import model.RequestUnit
 import org.slf4j.LoggerFactory
-
 /**
   * Created by linsixin on 2017/8/25.
   */
 object HttpProxyServerRun2 extends App {
 
   val logger = LoggerFactory.getLogger(getClass)
-  val port = 689
 
-  val requestQueue = new ArrayBlockingQueue[RequestUnit](ConnectionConstants.maxConnection)
+  val requestThreadCount = config.getInt(ConfigNames.requestThreadCount)
+  val port = config.getInt(ConfigNames.port)
+
+  logger.info(s"start listen at $port")
+
+  val requestQueue = new ArrayBlockingQueue[RequestUnit](config.getInt(ConfigNames.maxConnection))
   val clientPool = new ClientContextUnitPool
 
 //  val httpCache = new HttpCache("D:\\test-cache\\proxyserver")
@@ -30,7 +34,7 @@ object HttpProxyServerRun2 extends App {
   val controller = new RequestController(requestDispatcher,requestQueue)
   val serverConPool = new ServerConnectionPool[ServerConnection]()
 
-  for( i <- 1 to 3){
+  for( i <- 1 to requestThreadCount){
 //    val connectionPoolingClient = new CompressConnectionPoolClient
     val connectionPoolingClient = new ConnectionPoolClient
     val requestProxy = new RequestProxy(connectionPoolingClient)
@@ -74,7 +78,7 @@ object HttpProxyServerRun2 extends App {
     processThread.setName(s"Process-Thread-" +
       s"${clientConnection.socket.getRemoteSocketAddress.toString}")
     processThread.start()
-    logger.info(s"${LoggerMark.resource} process-active-count: ${runGroup.activeCount()}")
+//    logger.info(s"${LoggerMark.resource} process-active-count: ${runGroup.activeCount()}")
   }
 
 

@@ -3,7 +3,7 @@ import filter.ResponseFilterChain
 import http.{ConnectionPoolClient, RequestProxy}
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.protocol.HttpClientContext
-import utils.{FileUtils, HttpUtils}
+import utils.FileUtils
 
 /**
   * Created by linsixin on 2017/9/7.
@@ -20,7 +20,8 @@ object TestFailUrl extends App{
 //    "http://g.alicdn.com/browser/uc123_no/0.4.9/index/js/weather.min.js",
 //    "http://g.alicdn.com/browser/uc123_no/0.4.9/index/css/uc.home.pkg.min.css"
 //    "http://g.alicdn.com/pecdn/mlog/agp_heat.min.js?t=209010",
-    "http://www.uc123.com/?f=pcntgrid"
+//    "http://www.uc123.com/?f=pcntgrid",
+    "http://i-7.vcimg.com/crop/80b4b084d7df94f08aab46998921024a42433(100x100)/thumb.jpg"
   )
 
   val pool = new ConnectionPoolClient
@@ -36,7 +37,7 @@ object TestFailUrl extends App{
         println(ResponseFilterChain.handle(r).mkHttpString())
       case r : BinaryResponse =>
         println("binary response")
-//        FileUtils.save2File(s"logs/pic/$count.jpg",r.body)
+        FileUtils.save2File(s"logs/pic/test.jpg",r.body)
         println(ResponseFilterChain.handle(r).mkHttpString())
 
     }

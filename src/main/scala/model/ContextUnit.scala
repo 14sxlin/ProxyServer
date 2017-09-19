@@ -1,8 +1,9 @@
 package model
 
+import config.MyDefaultConfig
 import connection.ClientConnection
 import connection.control.ActiveControl
-import constants.ConnectionConstants
+import constants.ConfigNames
 import org.apache.http.client.protocol.HttpClientContext
 
 /**
@@ -15,7 +16,8 @@ import org.apache.http.client.protocol.HttpClientContext
 case class ContextUnit(clientConnection: ClientConnection,
                        context:HttpClientContext) extends ActiveControl{
 
-  override protected val idleThreshold: Long = ConnectionConstants.idleThreshold
+  override protected val idleThreshold: Long =
+    MyDefaultConfig.config.get(ConfigNames.idleThreshold).toLong
 
   override def closeWhenNotActive(): Unit = {
     clientConnection.closeAllResource()

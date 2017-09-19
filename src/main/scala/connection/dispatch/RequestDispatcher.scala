@@ -2,7 +2,7 @@ package connection.dispatch
 
 import connection.ClientConnection
 import connection.pool.ClientContextUnitPool
-import constants.LoggerMark
+import constants.{LoggerMark, _500InternalError}
 import entity.response.Response
 import filter.ResponseFilterChain
 import model.{ContextUnit, RequestUnit}
@@ -50,7 +50,8 @@ class RequestDispatcher(pool:ClientContextUnitPool) {
           key,
           request,
           serviceUnit.context,
-          onSuccess(serviceUnit.clientConnection)
+          onSuccess(serviceUnit.clientConnection),
+          onFail(key,serviceUnit.clientConnection)
         )
     }
 
@@ -63,8 +64,15 @@ class RequestDispatcher(pool:ClientContextUnitPool) {
     response =>
       val filtedResponse = responseFilterChain.handle(response)
       val data = filtedResponse.mkHttpBinary()
-      logResponse(filtedResponse,data.length)
+//      logResponse(filtedResponse,data.length)
       client.writeBinaryData(data)
+  }
+
+  protected def onFail(key:String,client: ClientConnection) : Exception => Unit = {
+    e =>
+      client.writeTextData(_500InternalError.content(e.getMessage,e.toString),"utf8")
+//      client.closeAllResource()
+//      removeExistContextUnit(key)
   }
 
 

@@ -10,4 +10,5 @@ import org.apache.http.client.protocol.HttpClientContext
 case class RequestUnit(key:String,
                        request:HttpUriRequest,
                        context:HttpClientContext,
-                       onSuccess:Response => Unit)
+                       onSuccess:Response => Unit,
+                       onFail: Exception => Unit)
