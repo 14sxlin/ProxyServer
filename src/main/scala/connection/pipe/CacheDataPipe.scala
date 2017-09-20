@@ -1,6 +1,7 @@
 package connection.pipe
 
 import connection.{ClientConnection, ServerConnection}
+import org.apache.commons.lang3.StringUtils
 
 /**
   * Created by linsixin on 2017/9/20.
@@ -8,31 +9,33 @@ import connection.{ClientConnection, ServerConnection}
 class CacheDataPipe(client:ClientConnection,
                     server:ServerConnection) extends FilterDataPipe(client,server){
 
-  override protected def processFirstPartOfResponse(part: Array[Byte]): Unit = {
 
+  def isResponseContainHeader(response:Array[Byte]) : Boolean = {
+    val strResponse = new String(response)
+    val firstLine = StringUtils.substringBefore(strResponse,"\n").trim
+    val parts =firstLine.split(" ")
+    parts.length == 3 && parts(0).startsWith("HTTP/")
   }
 
-  def isResponseCacheable(part:Array[Byte]):Boolean = {
-    val reponseWithHeader = new String(part)
-    logger.info(s"first part of response :\n $reponseWithHeader")
-    false
-  }
 
-  override protected def sendFirstPartOfResponseToClient(part: Array[Byte]): Unit = {
-
-  }
-
-  override protected def whenReceivePartOfResponseDo: (Array[Byte]) => Unit = {
+  override protected def whenReceivePartOfResponseDo: Array[Byte] => Array[Byte] = {
     part =>
+      if(isResponseContainHeader(part)){
+        logger.info("It is response header")
+        logger.info(s"${new String(part)}")
+      }else{
+        logger.info("not response header")
+      }
+      part
   }
 
   override protected def isResponseFinish(bytes: Array[Byte]): Boolean = {
     false
   }
 
-  override protected def whenFinishReceiveResponseDo: (Array[Byte]) => Unit = {
+  override protected def whenFinishReceiveResponseDo: Array[Byte] => Array[Byte] = {
     part =>
-
+      part
   }
 
   override protected def shouldDoFilter(firstPartOfResponse: Array[Byte]): Boolean = {

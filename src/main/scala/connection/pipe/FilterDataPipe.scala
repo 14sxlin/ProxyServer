@@ -1,8 +1,8 @@
 package connection.pipe
 
-import java.io.InputStream
-
 import connection.{ClientConnection, ServerConnection}
+import entity.request.{HeaderRecognizedRequest, RequestFactory}
+import utils.RequestUtils
 
 
 /**
@@ -19,9 +19,10 @@ class FilterDataPipe(client: ClientConnection,
       while(length != -1){
         length = cIn.read(buffer)
         logger.info(s"trans >>>>>>>>>> $length")
-        val part = buffer.slice(0,length)
-        whenReceiveRequestDo(part)
-        sOut.write(part)
+        val request = buffer.slice(0,length)
+        val newRequest = whenReceiveRequestDo(request)
+        logger.info(s"request:\n${new String(newRequest)}")
+        sOut.write(newRequest)
         sOut.flush()
       }
     }
@@ -29,107 +30,45 @@ class FilterDataPipe(client: ClientConnection,
 
   override protected val serverToClientDo = new Runnable {
     override def run(): Unit = tryMaybeSocketClosed{
-      val buffer = new Array[Byte](1024 * 10)
+      val buffer = new Array[Byte](2048)
       var length = 0
       while(length != -1){
-        length = cIn.read(buffer)
-        logger.info(s"trans >>>>>>>>>> $length")
+        length = sIn.read(buffer)
+        logger.info(s"trans <<<<<<<<<< $length")
         val part = buffer.slice(0,length)
-        whenReceivePartOfResponseDo(part)
-        if(isResponseFinish(part))
-          whenFinishReceiveResponseDo(part)
-        sOut.write(part)
-        sOut.flush()
+        val newPart = whenReceivePartOfResponseDo(part)
+        if(isResponseFinish(newPart))
+          whenFinishReceiveResponseDo(newPart)
+        cOut.write(newPart)
+        cOut.flush()
       }
     }
   }
 
-  protected def readOnce(in:InputStream) : Array[Byte] = {
-    val buffer = new Array[Byte](1024 * 10)
-    val length = in.read(buffer)
-    if (length == -1)
-      Array.empty[Byte]
-    else buffer.slice(0, length)
+  protected def whenReceiveRequestDo(request:Array[Byte]): Array[Byte] ={
+    RequestFactory.buildRequest(request) match {
+      case recognizedRequest : HeaderRecognizedRequest =>
+        RequestUtils.updateAbsoluteUriToRelative(recognizedRequest).mkHttpBinary()
+      case _ =>
+        request
+    }
+
   }
 
-  protected def whenReceiveRequestDo(request:Array[Byte]): Unit ={
-    logger.info(s"receive request :\n '${new String(request)}'")
-  }
-
-  protected def processFirstPartOfResponse(part:Array[Byte]):Unit = {
-    logger.info("process first part of response")
-  }
-
-  protected def sendFirstPartOfResponseToClient(part:Array[Byte]):Unit = {
-    logger.info("send first response to client")
-  }
-
-  protected def whenReceivePartOfResponseDo : Array[Byte] => Unit = {
+  protected def whenReceivePartOfResponseDo : Array[Byte] => Array[Byte] = {
     part =>
 //      logger.info(s"part of response")
+      part
   }
 
   protected def isResponseFinish(bytes: Array[Byte]) : Boolean = {
     false
   }
 
-  protected def whenFinishReceiveResponseDo : Array[Byte] => Unit = {
+  protected def whenFinishReceiveResponseDo : Array[Byte] => Array[Byte] = {
     lastPart =>
       logger.info("response finish !")
-  }
-
-
-  /**
-    * This method will start two thread which
-    * respectively listens input stream of
-    * server and client connection.Once there
-    * are some data,they will transfer to other
-    * connection directly.
-    */
-  override def startCommunicate(): Unit = {
-    checkIfConnectionOpen()
-    val firstPartOfResponse = getFirstPartOfResponse
-    if(firstPartOfResponse.isEmpty){
-      logger.error("first part of response is empty, close resource")
-      closeResource()
-      return
-    }
-    if(shouldDoFilter(firstPartOfResponse)){
-      processFirstPartOfResponse(firstPartOfResponse)
-      create2ThreadToTransData(
-        clientToServerDo = clientToServerDo,
-        serverToClientDo = serverToClientDo
-      )
-    }else{
-      create2ThreadToTransData(
-        clientToServerDo = clientToServerDo,
-        serverToClientDo = new Runnable {
-          override def run(): Unit = tryMaybeSocketClosed{
-            val buffer = new Array[Byte](2048)
-            var length = 0
-            while(length != -1){
-              length = sIn.read(buffer)
-              logger.info(s"trans <<<<<<<<<< $length")
-              val part = buffer.slice(0,length)
-              logger.info(s"part of content : ${new String(part)}")
-              cOut.write(part)
-              cOut.flush()
-            }
-          }
-        })
-    }
-  }
-
-  protected def getFirstRequest : Array[Byte] = {
-    logger.info("get first request")
-    readOnce(cIn)
-  }
-
-  protected def getFirstPartOfResponse : Array[Byte] = {
-    client.readBinaryData() match {
-      case Some(data) => data
-      case None => Array.empty[Byte]
-    }
+      lastPart
   }
 
   protected def shouldDoFilter(firstPartOfResponse:Array[Byte]):Boolean = {

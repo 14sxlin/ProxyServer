@@ -3,13 +3,13 @@ package controller
 import java.net.Socket
 
 import config.MyDefaultConfig.config
-import connection.pipe.DataPipe
+import connection.pipe.{CacheDataPipe, DataPipe, FilterDataPipe}
 import connection.{ClientConnection, ServerConnection}
 import constants.ConfigNames
 import entity.request.{EmptyRequest, HeaderRecognizedRequest, RequestFactory, TotalEncryptRequest}
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.{Logger, LoggerFactory}
-import utils.HttpUtils
+import utils.{HttpUtils, RequestUtils}
 
 
 /**
@@ -42,7 +42,6 @@ class FlowRequestController(client: ClientConnection) {
 
 
   private def decideHostAndCreateConnection(request:Array[Byte]) : Option[ServerConnection] = {
-    logger.info(s"first request in String: \n${new String(request)}")
     RequestFactory.buildRequest(request) match {
       case EmptyRequest => //return
         logger.info("empty able close client")
@@ -79,14 +78,12 @@ class FlowRequestController(client: ClientConnection) {
         val serverSocket = new Socket(host,port)
         val serverCon = new ServerConnection(serverSocket,s"$host:$port")
         serverCon.openConnection()
-
-        serverCon.writeBinaryData(
-          updateAbsoluteUriToRelative(recognizedRequest).mkHttpBinary()
-        )
+        val newReq = RequestUtils.updateAbsoluteUriToRelative(recognizedRequest).mkHttpBinary()
+        logger.info(s"first request in String: \n${new String(newReq)}")
+        serverCon.writeBinaryData(newReq)
         Some(serverCon)
       case None =>
-        //todo maybe absolute url
-        logger.info("no host header, close cons")
+        logger.warn("no host header, close cons")
         client.closeAllResource()
         None
     }
@@ -98,9 +95,9 @@ class FlowRequestController(client: ClientConnection) {
     client.openConnection()
     server.openConnection()
     //todo
-    new DataPipe(client,server)
+//    new DataPipe(client,server)
 //    new CacheDataPipe(client,server)
-//     new FilterDataPipe(client,server)
+     new FilterDataPipe(client,server)
   }
 
   private def startCommunicate(dataPipe: DataPipe) : Unit = {
@@ -113,20 +110,4 @@ class FlowRequestController(client: ClientConnection) {
     }
   }
 
-  def updateAbsoluteUriToRelative(request:HeaderRecognizedRequest) :HeaderRecognizedRequest = {
-    val uri = request.uri
-    if(uri.startsWith("http")){
-      logger.info(s"abs uri : $uri")
-      val host = request.getHost.get
-      val newUri = StringUtils.substringAfter(uri,host)
-      logger.info(s"new uri : $newUri")
-      val newFirstLine = request.firstLine.split(" ")
-      newFirstLine(1) = newUri
-      logger.info(s"new first line: ${newFirstLine.mkString(" ")}")
-      request.updateFirstLine(newFirstLine.mkString(" "))
-    }else{
-      request
-    }
-
-  }
 }

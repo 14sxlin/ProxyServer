@@ -78,13 +78,8 @@ class DataPipe(client: Connection,
 
   protected def create2ThreadToTransData(clientToServerDo:Runnable,
                                          serverToClientDo:Runnable):Unit = {
-    val requestThread = new Thread(clientToServerDo)
-    val responseThread = new Thread(serverToClientDo)
-    requestThread.setName(s"${client.name} <?>")
-    responseThread.setName(s"${server.name} <!>")
-    logger.info(s"${client.name} -> ${server.name} start communicate")
-    requestThread.start()
-    responseThread.start()
+    startRequestThread(clientToServerDo)
+    startResponseThread(serverToClientDo)
   }
 
   protected def checkIfConnectionOpen(): Unit = {

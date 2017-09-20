@@ -42,21 +42,7 @@ object RequestFactory {
     } else {
       val temp = formEmptyBodyRequest(firstLinePart.get,headerPart.get)
       temp.getContentEncoding
-      temp.getHeaderValue(HttpHeaders.CONTENT_TYPE) match {
-        case None =>
-          temp.toByteBodyRequest(bodyPart.get)
-        case Some(contentType) =>
-          if(StringUtils.contains(contentType,"text/"))
-          {
-            val charset = StringUtils.substringAfter(contentType,"charset=")
-            if(charset.isEmpty)
-              temp.toTextRequest(new String(bodyPart.get))
-            else
-              temp.toTextRequest(new String(bodyPart.get,charset))
-          }
-          else
-            temp.toByteBodyRequest(bodyPart.get)
-      }
+      temp.toByteBodyRequest(bodyPart.get)
     }
   }
 
