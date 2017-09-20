@@ -1,4 +1,6 @@
-package cache
+package cache.able
+
+import cache.validate.Validate
 
 /**
   * Created by linsixin on 2017/9/14.

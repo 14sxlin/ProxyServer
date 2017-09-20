@@ -10,9 +10,9 @@
 //  * Created by linsixin on 2017/9/16.
 //  */
 //class CacheRequestUnit(key:String,
-//                       request:HttpUriRequest,
+//                       able:HttpUriRequest,
 //                       context:HttpClientContext,
-//                       onSuccess:Response => Unit) extends RequestUnit(key,request,context){
+//                       onSuccess:Response => Unit) extends RequestUnit(key,able,context){
 //
 //  override def onSuccess(client: ClientConnection, responseFilterChain: ResponseFilterChain.type): (Response) => Unit = {
 //    super.onSuccess(client, responseFilterChain)

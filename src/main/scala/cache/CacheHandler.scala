@@ -1,5 +1,7 @@
 package cache
 
+import cache.able._
+import cache.validate.{ExpiryValidate, MaxAgeValidate}
 import constants.LoggerMark
 import entity.request.{HeaderRecognizedRequest, ResponseCachedRequest, ValidateRequest}
 import entity.response.Response
@@ -11,7 +13,7 @@ import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by linsixin on 2017/9/14.
-  * Check whether the request can be put
+  * Check whether the able can be put
   * into cache. If it can then put it into
   * cache and wait for fulfill.
   */

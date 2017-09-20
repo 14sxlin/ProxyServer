@@ -1,6 +1,6 @@
 package model
 
-import cache.Cacheable
+import cache.able.Cacheable
 import entity.response.Response
 
 /**

@@ -17,7 +17,7 @@ class OncePostTask(request: HttpUriRequest)
     if (request == null)
       return
     val postResult = Future[TextResponse]{
-      logger.info("request has been send")
+      logger.info("able has been send")
       HttpUtils.execute(request)
     }
 

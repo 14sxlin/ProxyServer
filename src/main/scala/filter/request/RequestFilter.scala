@@ -9,16 +9,16 @@ trait RequestFilter {
 
   def handle(request: HeaderRecognizedRequest): HeaderRecognizedRequest = {
     request match {
-      case null => throw new IllegalArgumentException("request should not be null")
+      case null => throw new IllegalArgumentException("able should not be null")
       case request : HeaderRecognizedRequest =>
         format(request)
     }
   }
 
   /**
-    * @param request request which is not null or empty request
+    * @param request able which is not null or empty able
     *                or TotalEncryptRequest
-    * @return new request after processing
+    * @return new able after processing
     */
   protected def format(request: HeaderRecognizedRequest):HeaderRecognizedRequest
 

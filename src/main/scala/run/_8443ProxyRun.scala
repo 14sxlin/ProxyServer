@@ -33,7 +33,7 @@ object _8443ProxyRun extends App{
     .build()
 
   val httpGet = new HttpGet("https://gg.sparrowxin.com:8443")
-  println(s"request for ${httpGet.getURI}")
+  println(s"able for ${httpGet.getURI}")
   val response = client.execute(httpGet)
   println(response.getStatusLine.toString)
   println(EntityUtils.toString(response.getEntity).trim)

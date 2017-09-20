@@ -3,10 +3,11 @@ import java.util.concurrent.ArrayBlockingQueue
 
 import config.MyDefaultConfig.config
 import connection._
-import connection.dispatch.{RequestConsumeThread, RequestDispatcher}
+import connection.dispatch.RequestDispatcher
 import connection.pool.{ClientContextUnitPool, ServerConnectionPool}
 import constants.ConfigNames
 import controller.RequestController
+import controller.thread.RequestConsumeThread
 import http.{ConnectionPoolClient, RequestProxy}
 import model.RequestUnit
 import org.slf4j.LoggerFactory

@@ -6,7 +6,7 @@ package utils
 object RequestUtils {
 
   /**
-    * transform nameValue pair to http request header string
+    * transform nameValue pair to http able header string
     *
     * @param nameValue a name value tuple
     * @return

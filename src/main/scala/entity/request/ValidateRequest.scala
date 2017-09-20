@@ -2,7 +2,7 @@ package entity.request
 
 /**
   * Created by linsixin on 2017/9/15.
-  * This class represent to the request
+  * This class represent to the able
   * can cache but not fulfill yet. So when
   * finish getting response also need to
   * fulfill the cache unit found by absUri.

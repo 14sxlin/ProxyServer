@@ -19,7 +19,7 @@ class OnceGetTask(request: HttpUriRequest)
     if (request == null)
       return
     val doGetResult = Future[TextResponse]{
-      logger.info("request has been send")
+      logger.info("able has been send")
       HttpUtils.execute(request)
     }
 

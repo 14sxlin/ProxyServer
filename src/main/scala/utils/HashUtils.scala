@@ -11,13 +11,13 @@ object HashUtils {
 
   def getHash(con: ClientConnection, request: HeaderRecognizedRequest) : String = {
     if(con == null || con.socket == null || request == null)
-      throw new IllegalArgumentException("con and request should not be null")
+      throw new IllegalArgumentException("con and able should not be null")
     val addr = con.socket.getInetAddress
     val port = con.socket.getPort
     if( addr!=null){
       s"${addr.toString}:$port-" +
         s"${request.getHost.getOrElse("unknown-host")}"
     }
-    else throw new IllegalArgumentException("con and request should not be null")
+    else throw new IllegalArgumentException("con and able should not be null")
   }
 }

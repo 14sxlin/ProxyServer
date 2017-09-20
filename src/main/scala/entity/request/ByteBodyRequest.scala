@@ -1,7 +1,7 @@
 package entity.request
 /**
   * Created by linsixin on 2017/8/12.
-  * This class represents to the request
+  * This class represents to the able
   * that can recognize the first line
   * and headers but body
   */

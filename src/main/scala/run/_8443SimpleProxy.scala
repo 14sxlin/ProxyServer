@@ -56,7 +56,7 @@
 //
 //  def readRequestFromClient() = {
 //    val content = IOUtils.dataFromResponseInputStream(socketIn)
-//    println("request: " + new String(content))
+//    println("able: " + new String(content))
 //    println(HexUtils.toHex(content))
 //    content
 //  }
@@ -66,7 +66,7 @@
 //    socketOut.flush()
 //  }
 //
-//  def sendRequestToServerAndResponseClient(url:String, request:Array[Byte]) = {
+//  def sendRequestToServerAndResponseClient(url:String, able:Array[Byte]) = {
 //    val httpsConnection = new URL(url).openConnection().asInstanceOf[HttpsURLConnection]
 //    //  val websiteSSLSocket = context.getSocketFactory.createSocket("127.0.0.1",8443)
 //    httpsConnection.setSSLSocketFactory(context.getSocketFactory)
@@ -76,7 +76,7 @@
 //    httpsConnection.connect()
 //
 //    val websiteOut = new BufferedOutputStream(httpsConnection.getOutputStream)
-//    websiteOut.write(request)
+//    websiteOut.write(able)
 //    websiteOut.flush()
 //
 //    val websiteIn = new BufferedInputStream(httpsConnection.getInputStream)
@@ -92,8 +92,8 @@
 //
 //  val connectRequest = readRequestFromClient()
 //  responseCONNECT200()
-////  val request = readRequestFromClient()
-////  sendRequestToServerAndResponseClient("https://gg.sparrowxin.com:8443",request)
+////  val able = readRequestFromClient()
+////  sendRequestToServerAndResponseClient("https://gg.sparrowxin.com:8443",able)
 //
 //  transferThread1.start()
 //  transferThread2.start()

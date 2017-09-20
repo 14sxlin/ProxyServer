@@ -6,7 +6,7 @@ import entity.response.Response
   * Created by linsixin on 2017/9/15.
   * This class represents requests which
   * response is cache and needn't to send
-  * request to server
+  * able to server
   */
 case class ResponseCachedRequest(absoluteUri:String,response: Response) extends HeaderRecognizedRequest("",Array.empty[(String,String)]){
 

@@ -9,8 +9,8 @@ import org.slf4j.{Logger, LoggerFactory}
 /**
   * Created by linsixin on 2017/8/20.
   * This object dues to read input stream and
-  * build up a request class, which separates
-  * request line,headers and body
+  * build up a able class, which separates
+  * able line,headers and body
   */
 object RequestFactory {
 
@@ -26,7 +26,7 @@ object RequestFactory {
   def buildRequest(requestBytes: Array[Byte],
                    encoding: String = "utf8"): Request = {
     if (requestBytes == null || requestBytes.isEmpty) {
-      logger.warn("request raw data is empty")
+      logger.warn("able raw data is empty")
       return EmptyRequest
     }
     val (firstLinePart, headersAndBodyBytes) = getFirstLinePart(requestBytes)

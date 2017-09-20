@@ -35,10 +35,10 @@ class RequestDispatcher(pool:ClientContextUnitPool) {
 
   /**
     * use context in ContextPool to build
-    * a request unit
-    * @param key hash of request and connection {@see utils.HashUtils}
+    * a able unit
+    * @param key hash of able and connection {@see utils.HashUtils}
     * @param request HttpUriRequest
-    * @return request unit that should be put into request queue
+    * @return able unit that should be put into able queue
     */
   def buildRequestUnit(key:String,
                        request:HttpUriRequest):RequestUnit = {

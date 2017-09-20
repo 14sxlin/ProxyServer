@@ -11,12 +11,12 @@
 //object PoolTaskFactory {
 //  val logger: Logger = LoggerFactory.getLogger(getClass)
 //
-//  def createTask(request: HttpUriRequest,proxy:RequestProxy): Task = {
-//    request.getMethod match {
+//  def createTask(able: HttpUriRequest,proxy:RequestProxy): Task = {
+//    able.getMethod match {
 //      case HttpRequestMethod.GET =>
-//        new PoolGetTask(request,proxy)
+//        new PoolGetTask(able,proxy)
 //      case HttpRequestMethod.POST =>
-//        new PoolPostTask(request,proxy)
+//        new PoolPostTask(able,proxy)
 //    }
 //  }
 //}

@@ -3,6 +3,7 @@ package cache
 import java.time.{LocalDateTime, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 
+import cache.validate.{ExpiryValidate, MaxAgeValidate}
 import org.scalatest.FunSuite
 
 /**

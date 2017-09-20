@@ -62,7 +62,7 @@ object _8080ProxyRun extends App{
         runAndRetryWhenFail {
           val result = httpClient.doPostByProxyWithHttp(
             proxy,proxyPort,postUrl,params)
-          logger.info(s"receive request length = ${result.length}")
+          logger.info(s"receive able length = ${result.length}")
           Thread.sleep(5000)
         }
     }

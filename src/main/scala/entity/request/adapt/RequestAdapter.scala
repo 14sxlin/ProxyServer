@@ -6,10 +6,10 @@ import org.apache.http.client.methods.HttpUriRequest
 /**
   * Created by linsixin on 2017/8/20.
   * Change Request or WrapRequest to HttpUriRequest
-  * that HttpClient used to send Http request to
+  * that HttpClient used to send Http able to
   * server later.
   *
-  * If request is not WrappedRequest , then its
+  * If able is not WrappedRequest , then its
   * entity will be regard as ByteArrayEntity
   */
 trait RequestAdapter {

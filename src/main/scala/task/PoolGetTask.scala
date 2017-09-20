@@ -16,7 +16,7 @@
 //    if (session == null)
 //      return
 //    val postResult = Future[TextResponse]{
-//      logger.info("request has been send")
+//      logger.info("able has been send")
 //      proxy.doRequest(session.,session.context)
 //    }
 //

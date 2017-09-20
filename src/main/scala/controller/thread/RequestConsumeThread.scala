@@ -1,4 +1,4 @@
-package connection.dispatch
+package controller.thread
 
 import java.util.concurrent.ArrayBlockingQueue
 

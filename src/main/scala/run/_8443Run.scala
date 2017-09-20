@@ -12,13 +12,13 @@
 //object _8443Run extends App {
 //
 //  def useSSLSocket():Unit = {
-//    val request = "GET / HTTP/1.1\nHost: gg.sparrowxin.com:8443\nConnection: keep-alive\nCache-Control: max-age=0\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\nUpgrade-Insecure-Requests: 1\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 UBrowser/6.1.3397.16 Safari/537.36\nAccept-Encoding: gzip, deflate\nAccept-Language: zh-CN,zh;q=0.8"
-//    val requestBytes = request.getBytes()
+//    val able = "GET / HTTP/1.1\nHost: gg.sparrowxin.com:8443\nConnection: keep-alive\nCache-Control: max-age=0\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\nUpgrade-Insecure-Requests: 1\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 UBrowser/6.1.3397.16 Safari/537.36\nAccept-Encoding: gzip, deflate\nAccept-Language: zh-CN,zh;q=0.8"
+//    val requestBytes = able.getBytes()
 //    val context = SSLContextFactory.getContext("D:/keys/tomcat", "123456")
 //    val ssLServerSocketFactory = context.getServerSocketFactory
 //    val websiteSSLSocket = context.getSocketFactory.createSocket("gg.sparrowxin.com", 8443)
 //    println(s"${websiteSSLSocket.getLocalPort} -> ${websiteSSLSocket.getPort}")
-//    println("write request")
+//    println("write able")
 //    val websiteOut = new BufferedOutputStream(websiteSSLSocket.getOutputStream)
 //    websiteOut.write(requestBytes)
 //    println(HexUtils.toHex(requestBytes))

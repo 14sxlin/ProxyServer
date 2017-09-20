@@ -11,13 +11,13 @@ abstract class HeaderRecognizedRequest(val firstLine:String,
 
 
   /**
-    * parse http request request first line
+    * parse http able able first line
     *
-    * @return (request-method,request-uri,http-version)
+    * @return (able-method,able-uri,http-version)
     */
   def firstLineInfo: (String, String, String) = {
     if (firstLine == null || isUnknownRequestLine(firstLine))
-      throw new IllegalArgumentException(s"$firstLine is not a http request line")
+      throw new IllegalArgumentException(s"$firstLine is not a http able line")
     val partsOfLine = firstLine.trim.split(" ")
     val method = partsOfLine(0)
     val uri = partsOfLine(1)
@@ -38,7 +38,7 @@ abstract class HeaderRecognizedRequest(val firstLine:String,
   }
 
   /**
-    * format to http request format with empty line
+    * format to http able format with empty line
     * using \r\n to separate rather than \n
     */
   def mkHttpStringOfFirstLineAndHeaders: String = {

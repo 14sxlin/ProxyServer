@@ -17,10 +17,9 @@ object FlowProxyServerRun extends App{
   def begin(): Unit = this.synchronized{
     val receiver = ConnectionReceiver(port)
     val client = receiver.accept()
-    val controller = new FlowRequestController(client)
+    val controller = new FlowRequestController(client) //todo
     val processRun = new Runnable {
       override def run(): Unit = controller.process()
-
     }
     val processThread = new Thread(processRun)
     processThread.setName(s"Process-Thread-" +

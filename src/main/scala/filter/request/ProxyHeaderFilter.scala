@@ -5,9 +5,9 @@ import org.apache.http.HttpHeaders
 
 /**
   * Created by linsixin on 2017/8/11.
-  * when pass request or response , a proxy should not
+  * when pass able or response , a proxy should not
   * pass any thing about connection alive, so this handle
-  * helps to get rid of related headers from request or response
+  * helps to get rid of related headers from able or response
   */
 object ProxyHeaderFilter extends RequestFilter {
 

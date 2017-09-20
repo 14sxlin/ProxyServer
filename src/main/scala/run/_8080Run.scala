@@ -17,7 +17,7 @@ object _8080Run extends App{
     val requestBytes = request.getBytes()
     val websiteSSLSocket = new Socket("gg.sparrowxin.com",8080)
     println("" + websiteSSLSocket.getLocalPort + " -> " + websiteSSLSocket.getPort)
-    println("write request")
+    println("write able")
     val websiteOut = new BufferedOutputStream(websiteSSLSocket.getOutputStream)
     websiteOut.write(requestBytes)
     println(HexUtils.toHex(requestBytes))

@@ -56,7 +56,7 @@ class TestRequestFactory extends FunSuite {
   }
 
 
-  test("test build request from bytes"){
+  test("test build able from bytes"){
     val firstLine = "POST http://qurl.f.360.cn/wdinfo.php HTTP/1.1\n"
     val headers =
       "Host: qurl.f.360.cn\n" +

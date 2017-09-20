@@ -5,7 +5,8 @@ import java.util.concurrent.ArrayBlockingQueue
 
 import config.MyDefaultConfig
 import connection.dispatch.RequestDispatcher
-import connection.{ClientConnection, DataTransfer, ServerConnection}
+import connection.pipe.DataPipe
+import connection.{ClientConnection, ServerConnection}
 import constants.{ConfigNames, LoggerMark}
 import entity.request._
 import entity.request.adapt.{NoneBodyRequestAdapter, RequestAdapter, RequestWithBodyAdapter}
@@ -52,7 +53,7 @@ class RequestController(requestDispatcher:RequestDispatcher,
   protected def processRequest(request: Request,client: ClientConnection): Unit = {
     request match {
       case EmptyRequest => //return
-        logger.warn(s"${LoggerMark.resource} empty request..close socket")
+        logger.warn(s"${LoggerMark.resource} empty able..close socket")
         client.closeAllResource()
       case e: TotalEncryptRequest => //ssl
         throw new Exception(s"unable to process, ${new String(e.bytes)}")
@@ -93,7 +94,7 @@ class RequestController(requestDispatcher:RequestDispatcher,
 
   /**
     *
-    * @param hash use HashUtils.getHash(client,request) to get hash value
+    * @param hash use HashUtils.getHash(client,able) to get hash value
     */
   protected def processGetOrPostRequest(hash:String,
                                         request: HeaderRecognizedRequest,
@@ -145,7 +146,7 @@ class RequestController(requestDispatcher:RequestDispatcher,
       val serverCon = new ServerConnection(serverSocket,s"$host:$port")
       serverCon.setReadTimeout(readTimeout)
       serverCon.openConnection()
-      val transfer = new DataTransfer(client,serverCon)
+      val transfer = new DataPipe(client,serverCon)
       transfer.startCommunicate()
       //todo when to close transfer
     }else{

@@ -2,6 +2,7 @@ package cache
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
 
+import cache.validate.MaxAgeValidate
 import org.scalatest.FunSuite
 
 /**

@@ -14,11 +14,11 @@ object RequestWithBodyAdapter extends RequestAdapter {
   override def adapt(request: Request): HttpUriRequest = {
     request match {
       case EmptyRequest  =>
-        throw new IllegalArgumentException("empty request")
+        throw new IllegalArgumentException("empty able")
       case _:TotalEncryptRequest =>
-        throw new IllegalArgumentException("total encrypt request shouldn't process here")
+        throw new IllegalArgumentException("total encrypt able shouldn't process here")
       case _: EmptyBodyRequest =>
-        throw new IllegalArgumentException("body empty request shouldn't process here")
+        throw new IllegalArgumentException("body empty able shouldn't process here")
       case request: TextRequest =>
         val httpPost = new HttpPost(request.uri)
         putHeaders(request, httpPost)
