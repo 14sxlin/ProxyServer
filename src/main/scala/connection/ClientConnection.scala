@@ -3,9 +3,6 @@ package connection
 import java.io.{BufferedInputStream, BufferedOutputStream}
 import java.net.Socket
 
-import config.MyDefaultConfig
-import constants.ConfigNames
-
 
 /**
   * Created by linsixin on 2017/8/11.
@@ -15,8 +12,6 @@ import constants.ConfigNames
   *
   */
 case class ClientConnection(socket: Socket) extends Connection{
-
-  socket.setSoTimeout(MyDefaultConfig.config.getInt(ConfigNames.readTimeout)) // set default timeout
 
   def this(socket: Socket,name:String) = {
     this(socket)

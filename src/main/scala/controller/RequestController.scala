@@ -143,7 +143,7 @@ class RequestController(requestDispatcher:RequestDispatcher,
       client.setReadTimeout(readTimeout)
       val serverSocket = new Socket(host,port)
       val serverCon = new ServerConnection(serverSocket,s"$host:$port")
-      client.setReadTimeout(readTimeout)
+      serverCon.setReadTimeout(readTimeout)
       serverCon.openConnection()
       val transfer = new DataTransfer(client,serverCon)
       transfer.startCommunicate()

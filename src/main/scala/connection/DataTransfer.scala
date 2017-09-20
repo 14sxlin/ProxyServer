@@ -76,6 +76,7 @@ class DataTransfer(client: Connection,
         var length = 0
         while(length != -1){
           length = cIn.read(buffer)
+          logger.info(s"trans >>>>>>>>>> $length")
           sOut.write(buffer.slice(0,length))
           sOut.flush()
         }
@@ -87,6 +88,8 @@ class DataTransfer(client: Connection,
         var length = 0
         while(length != -1){
           length = sIn.read(buffer)
+          logger.info(s"trans <<<<<<<<<< $length")
+          logger.info(s"part of content : ${new String(buffer.slice(0,length))}")
           cOut.write(buffer.slice(0,length))
           cOut.flush()
         }
@@ -116,8 +119,13 @@ class DataTransfer(client: Connection,
   }
 
   private def logExceptionMessageAndCloseResources(e:Exception):Unit = {
-    logger.error(s"${LoggerMark.resource}: ${e.getMessage}... close all sockets")
+    logger.error(s"${LoggerMark.resource}: ${e.getMessage}... close")
     client.closeAllResource()
     server.closeAllResource()
+  }
+
+  def closeResource():Unit = {
+    server.closeAllResource()
+    client.closeAllResource()
   }
 }
